@@ -13,7 +13,8 @@ class Store {
     try {
       const raw = localStorage.getItem(Store.KEYS.ASSIGNMENTS);
       if (!raw) return Store._defaultAssignments();
-      return JSON.parse(raw).map(Assignment.fromJSON);
+      const parsed = JSON.parse(raw).map(Assignment.fromJSON);
+      return parsed.length ? parsed : Store._defaultAssignments();
     } catch { return Store._defaultAssignments(); }
   }
 
@@ -25,7 +26,8 @@ class Store {
     try {
       const raw = localStorage.getItem(Store.KEYS.HABITS);
       if (!raw) return Store._defaultHabits();
-      return JSON.parse(raw).map(Habit.fromJSON);
+      const parsed = JSON.parse(raw).map(Habit.fromJSON);
+      return parsed.length ? parsed : Store._defaultHabits();
     } catch { return Store._defaultHabits(); }
   }
 
