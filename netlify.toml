@@ -1,0 +1,9 @@
+[build]
+  command   = "node inject-env.js"
+  publish   = "dist"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"

@@ -1,6 +1,5 @@
 class App {
   constructor() {
-    // Wait for Firebase module to expose its APIs before booting
     if (window.FirebaseAppAPI && window.FirestoreAPI) {
       this._init();
     } else {
@@ -14,14 +13,15 @@ class App {
     const { initializeApp } = window.FirebaseAppAPI;
     const { getFirestore }  = window.FirestoreAPI;
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyBbmavaWFd0oStqv0TvlYLoiKd2lmHwAPQ",
-      authDomain: "learning-tracker-35421.firebaseapp.com",
-      projectId: "learning-tracker-35421",
-      storageBucket: "learning-tracker-35421.firebasestorage.app",
-      messagingSenderId: "67006399648",
-      appId: "1:67006399648:web:91cd23437276936741b5c5"
-    };
+    // Config injected by Netlify at build time via _headers or env vars
+    // Falls back to window.__FIREBASE_CONFIG__ set in index.html
+    const firebaseConfig = window.__FIREBASE_CONFIG__;
+
+    if (!firebaseConfig || !firebaseConfig.apiKey) {
+      console.error('Firebase config missing. Set environment variables in Netlify.');
+      document.body.style.opacity = '1';
+      return;
+    }
 
     const firebaseApp = initializeApp(firebaseConfig);
     const db = getFirestore(firebaseApp);
