@@ -314,23 +314,128 @@ class AssignmentUI {
       if (daysLeft !== null) {
         if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft)+'d overdue'; daysClass = 'overdue'; }
         else if (daysLeft === 0) { daysLabel = 'Due today'; daysClass = 'due-today'; }
-        else                     { daysLabel = daysLeft+'d left'; }
+        else                     { daysLabel = daysLeft+'d left'; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
       }
       const statusCls   = 'status-'   + a.status.replace(' ','-').toLowerCase();
       const priorityCls = 'priority-' + a.priority.toLowerCase();
       const progBtns = [25,50,75,100].map(p =>
-        '<button class="prog-btn'+(a.progress===p?' prog-active':'')+'" onclick="app.assignmentUI.saveField('+a.id+',\'progress\','+p+')">'+p+'%</button>'
+        '<button class="prog-btn'+(a.progress===p?' prog-active':'')+'" onclick="app.assignmentUI.saveMobileField('+a.id+',\'progress\','+p+')">'+p+'%</button>'
       ).join('');
-      return '<div class="mobile-card'+(a.status==='Completed'?' row-completed':'')+'">'
-        +'<div class="mobile-card-header"><div class="mobile-card-title">'+a.title+'</div><button class="btn-icon del-btn" onclick="app.deleteAssignment('+a.id+')">&#128465;&#65039;</button></div>'
-        +'<div class="mobile-card-course">'+(a.courseName||'No course')+(a.durationHours?' &nbsp;·&nbsp; '+a.durationHours+' hrs':'')+'</div>'
-        +(a.notes ? '<div class="mobile-card-notes">'+a.notes+'</div>' : '')
-        +'<div class="mobile-card-meta"><span class="status-badge '+statusCls+'">'+a.status+'</span><span class="priority-badge '+priorityCls+'">'+a.priority+'</span><span class="days-badge '+daysClass+'">'+daysLabel+'</span></div>'
+      const titleSafe  = (a.title||'').replace(/"/g,'&quot;');
+      const notesSafe  = (a.notes||'').replace(/"/g,'&quot;');
+      const courseSafe = (a.courseName||'').replace(/"/g,'&quot;');
+
+      return '<div class="mobile-card'+(a.status==='Completed'?' row-completed':'')+'" data-id="'+a.id+'">'
+
+        // Header — title + delete
+        +'<div class="mobile-card-header">'
+        +'<input class="mc-input mc-title" type="text" value="'+titleSafe+'" placeholder="Assignment title..."'
+        +' onblur="app.assignmentUI.saveMobileField('+a.id+',\'title\',this.value)"'
+        +' onkeydown="if(event.key===\'Enter\')this.blur()" />'
+        +'<button class="btn-icon del-btn" onclick="app.deleteAssignment('+a.id+')" title="Delete">&#128465;&#65039;</button>'
+        +'</div>'
+
+        // Course + duration row
+        +'<div class="mc-row">'
+        +'<div class="mc-field-wrap">'
+        +'<div class="mc-label">Course</div>'
+        +'<input class="mc-input" type="text" value="'+courseSafe+'" placeholder="Course name..."'
+        +' onblur="app.assignmentUI.saveMobileField('+a.id+',\'courseName\',this.value)"'
+        +' onkeydown="if(event.key===\'Enter\')this.blur()" />'
+        +'</div>'
+        +'<div class="mc-field-wrap mc-field-sm">'
+        +'<div class="mc-label">Hrs</div>'
+        +'<input class="mc-input" type="number" min="0" step="0.5" value="'+(a.durationHours||'')+'" placeholder="0"'
+        +' onblur="app.assignmentUI.saveMobileField('+a.id+',\'durationHours\',this.value)"'
+        +' onkeydown="if(event.key===\'Enter\')this.blur()" />'
+        +'</div>'
+        +'</div>'
+
+        // Dates row
+        +'<div class="mc-row">'
+        +'<div class="mc-field-wrap">'
+        +'<div class="mc-label">Assigned</div>'
+        +'<input class="mc-input" type="date" value="'+(a.assignedDate||'')+'"'
+        +' onchange="app.assignmentUI.saveMobileField('+a.id+',\'assignedDate\',this.value)" />'
+        +'</div>'
+        +'<div class="mc-field-wrap">'
+        +'<div class="mc-label">Due Date</div>'
+        +'<input class="mc-input" type="date" value="'+(a.dueDate||'')+'"'
+        +' onchange="app.assignmentUI.saveMobileField('+a.id+',\'dueDate\',this.value)" />'
+        +'</div>'
+        +'</div>'
+
+        // Status + Priority + Days Left row
+        +'<div class="mc-row mc-badges-row">'
+        +'<div class="mc-field-wrap">'
+        +'<div class="mc-label">Status</div>'
+        +'<select class="mc-select '+statusCls+'" onchange="app.assignmentUI.saveMobileField('+a.id+',\'status\',this.value);this.className=\'mc-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
+        +'<option'+(a.status==='Pending'?' selected':'')+'>Pending</option>'
+        +'<option'+(a.status==='In Progress'?' selected':'')+'>In Progress</option>'
+        +'<option'+(a.status==='Completed'?' selected':'')+'>Completed</option>'
+        +'</select>'
+        +'</div>'
+        +'<div class="mc-field-wrap">'
+        +'<div class="mc-label">Priority</div>'
+        +'<select class="mc-select '+priorityCls+'" onchange="app.assignmentUI.saveMobileField('+a.id+',\'priority\',this.value);this.className=\'mc-select priority-\'+this.value.toLowerCase();">'
+        +'<option'+(a.priority==='High'?' selected':'')+'>High</option>'
+        +'<option'+(a.priority==='Medium'?' selected':'')+'>Medium</option>'
+        +'<option'+(a.priority==='Low'?' selected':'')+'>Low</option>'
+        +'</select>'
+        +'</div>'
+        +'<div class="mc-field-wrap mc-field-sm">'
+        +'<div class="mc-label">Days Left</div>'
+        +'<span class="days-badge '+daysClass+'" style="display:inline-block;margin-top:4px">'+daysLabel+'</span>'
+        +'</div>'
+        +'</div>'
+
+        // Progress
+        +'<div class="mc-field-wrap" style="margin-top:10px">'
+        +'<div class="mc-label">Progress — '+a.progress+'%</div>'
         +'<div class="mobile-prog-bar"><div class="mobile-prog-fill" style="width:'+a.progress+'%"></div></div>'
-        +'<div style="font-size:11px;color:var(--text2);margin-top:4px">'+a.progress+'% complete</div>'
         +'<div class="mobile-prog-btns">'+progBtns+'</div>'
+        +'</div>'
+
+        // Notes
+        +'<div class="mc-field-wrap" style="margin-top:8px">'
+        +'<div class="mc-label">Notes</div>'
+        +'<textarea class="mc-textarea" placeholder="Any notes or remarks..." rows="2"'
+        +' onblur="app.assignmentUI.saveMobileField('+a.id+',\'notes\',this.value)">'+notesSafe+'</textarea>'
+        +'</div>'
+
         +'</div>';
     }).join('');
+  }
+
+  // Separate save handler for mobile — updates card in place without full re-render
+  saveMobileField(id, field, value) {
+    const update = {};
+    update[field] = field === 'progress' ? (parseInt(value)||0) : value;
+    this.manager.update(id, update);
+
+    if (field === 'status' || field === 'priority' || field === 'courseName' || field === 'progress') {
+      this._renderTable(); // full re-render to keep desktop table + mobile cards in sync
+    } else if (field === 'dueDate' || field === 'assignedDate') {
+      // Update just the days-left badge on this mobile card
+      const card = document.querySelector('.mobile-card[data-id="'+id+'"]');
+      if (card) {
+        const a = this.manager.assignments.find(a => a.id === id);
+        if (a) {
+          const daysLeft = a.daysLeft;
+          let label = '—', cls = '';
+          if (daysLeft !== null) {
+            if (daysLeft < 0)        { label = Math.abs(daysLeft)+'d overdue'; cls = 'overdue'; }
+            else if (daysLeft === 0) { label = 'Due today'; cls = 'due-today'; }
+            else                     { label = daysLeft+'d left'; cls = daysLeft<=3?'due-soon':''; }
+          }
+          const badge = card.querySelector('.days-badge');
+          if (badge) { badge.textContent = label; badge.className = 'days-badge '+cls; }
+        }
+      }
+      this._renderStats();
+    } else {
+      this._renderStats();
+    }
   }
 
   saveField(id, field, value) {
