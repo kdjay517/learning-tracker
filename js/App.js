@@ -221,15 +221,53 @@ class App {
     if (daysLeft !== null) {
       if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft)+'d overdue'; daysClass = 'overdue'; }
       else if (daysLeft === 0) { daysLabel = 'Due today'; daysClass = 'due-today'; }
-      else                     { daysLabel = daysLeft+'d left'; daysClass = 'due-soon'; }
+      else                     { daysLeft <= 3 ? daysClass = 'due-soon' : null; daysLabel = daysLeft+'d left'; }
     }
     const color = this.courseManager ? this.courseManager.getColor(a.courseName) : '#6c63ff';
-    return '<div class="dash-assignment-row" onclick="app._showTab(\'assignments\')">'
+    return '<div class="dash-assignment-row" onclick="app.goToAssignment('+a.id+')">'
       + '<span class="dash-course-dot" style="background:'+color+'"></span>'
       + '<span class="dash-asgn-title">'+a.title+'</span>'
       + '<span class="dash-asgn-course">'+(a.courseName||'—')+'</span>'
       + '<span class="days-badge '+daysClass+'">'+daysLabel+'</span>'
       + '</div>';
+  }
+
+  goToAssignment(id) {
+    // 1. Show all assignments (including completed) so row is visible
+    this.assignmentUI._archiveMode = true;
+    const archiveBtn = document.getElementById('aArchiveToggle');
+    if (archiveBtn) archiveBtn.innerHTML = '&#128194; Hide Completed';
+
+    // 2. Clear any active search/filter so the row isn't hidden
+    this.assignmentUI._searchQuery = '';
+    const searchEl = document.getElementById('aSearch');
+    if (searchEl) searchEl.value = '';
+    this.assignmentManager.filterStatus   = 'All';
+    this.assignmentManager.filterPriority = 'All';
+    const statusEl   = document.getElementById('aFilterStatus');
+    const priorityEl = document.getElementById('aFilterPriority');
+    if (statusEl)   statusEl.value   = 'All';
+    if (priorityEl) priorityEl.value = 'All';
+
+    // 3. Switch to assignments tab and render
+    this._showTab('assignments');
+
+    // 4. After render, scroll to the row and flash-highlight it
+    setTimeout(() => {
+      const row = document.querySelector('tr[data-id="'+id+'"]');
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('row-highlight');
+        setTimeout(() => row.classList.remove('row-highlight'), 2000);
+      }
+      // Also scroll mobile card into view
+      const card = document.querySelector('.mobile-card[data-id="'+id+'"]');
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('row-highlight');
+        setTimeout(() => card.classList.remove('row-highlight'), 2000);
+      }
+    }, 150);
   }
 
   _calcHabitStreak(habit) {

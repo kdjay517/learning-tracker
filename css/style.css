@@ -1557,3 +1557,185 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   .courses-header { flex-direction: column; align-items: stretch; }
   .add-course-wrap { width: 100%; }
 }
+
+/* ===== DASHBOARD ROW HIGHLIGHT (navigate from dashboard) ===== */
+@keyframes highlightFade {
+  0%   { background: rgba(108,99,255,0.35); }
+  100% { background: transparent; }
+}
+.row-highlight td { animation: highlightFade 2s ease forwards; }
+.mobile-card.row-highlight { animation: highlightFade 2s ease forwards; }
+
+/* ============================================================
+   COMPREHENSIVE MOBILE FIX — all features properly working
+   ============================================================ */
+@media (max-width: 768px) {
+
+  /* ── Layout ── */
+  .app-wrap { padding: 0 12px 60px; }
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    gap: 10px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .tabs {
+    flex: 1;
+    justify-content: stretch;
+  }
+  .tab-btn {
+    flex: 1;
+    font-size: 10px;
+    padding: 7px 4px;
+    text-align: center;
+  }
+  .theme-toggle { flex-shrink: 0; }
+
+  /* ── Stat cards ── */
+  .stat-row { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .stat-value { font-size: 22px; }
+
+  /* ── Charts ── */
+  .charts-row { grid-template-columns: 1fr; gap: 10px; }
+  .chart-card canvas { max-height: 160px; }
+
+  /* ── Hours summary ── */
+  .hours-card { gap: 8px; }
+  .hours-item { min-width: 100px; }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .toolbar select,
+  .search-input,
+  .btn-archive { width: 100%; box-sizing: border-box; }
+  .toolbar-spacer { display: none; }
+  .btn-primary { width: 100%; padding: 13px; font-size: 14px; text-align: center; }
+
+  /* ── Bulk bar ── */
+  .bulk-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 10px;
+  }
+  .bulk-btn { font-size: 12px; padding: 8px 12px; flex: 1; text-align: center; min-width: 120px; }
+  .bulk-count { width: 100%; text-align: center; }
+
+  /* ── Dashboard ── */
+  .dash-cards { grid-template-columns: repeat(2,1fr); gap: 8px; }
+  .dash-card { padding: 12px 8px; }
+  .dash-card-val { font-size: 20px; }
+  .dash-card-label { font-size: 9px; }
+  .dash-section { padding: 12px; }
+  .dash-assignment-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .dash-asgn-course { min-width: unset; font-size: 10px; }
+
+  /* ── Weekly summary ── */
+  .weekly-stats { gap: 12px; }
+  .weekly-stat-val { font-size: 16px; }
+
+  /* ── Progress bar wrap ── */
+  .progress-wrap { padding: 12px; }
+
+  /* ── Habit controls ── */
+  .habit-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .month-nav { justify-content: space-between; }
+  .add-habit-wrap {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+    margin-left: 0;
+  }
+  .add-habit-wrap input { flex: 1; width: auto; font-size: 16px; }
+  .add-habit-wrap .btn-primary { width: auto; flex-shrink: 0; }
+
+  /* ── Habit grid ── */
+  .hgrid-habit-cell { min-width: 160px; width: 160px; font-size: 11px; padding: 0 8px; }
+  .hgrid-corner { min-width: 160px; width: 160px; }
+  .hgrid-cell { min-width: 32px; height: 34px; font-size: 10px; }
+  .hgrid-day-head { min-width: 32px; height: 34px; font-size: 9px; }
+
+  /* ── Top habits ── */
+  .habit-bottom { grid-template-columns: 1fr; gap: 10px; }
+  .top-habit-name { flex: 0 0 120px; font-size: 11px; }
+
+  /* ── Courses page ── */
+  .courses-header { flex-direction: column; align-items: stretch; gap: 10px; }
+  .courses-title { font-size: 16px; }
+  .add-course-wrap { flex-wrap: wrap; gap: 8px; }
+  .add-course-wrap input { flex: 1; min-width: 120px; }
+  .add-course-wrap .btn-primary { width: 100%; }
+  .courses-grid { grid-template-columns: 1fr; }
+  .course-mgmt-name { font-size: 13px; }
+
+  /* ── Login screen ── */
+  .login-card { padding: 28px 20px; }
+  .login-title { font-size: 22px; }
+  .login-features { gap: 6px; }
+  .login-feature { font-size: 12px; padding: 7px 10px; }
+  .google-signin-btn { padding: 13px 16px; font-size: 14px; }
+
+  /* ── User avatar dropdown ── */
+  .user-dropdown { right: -8px; min-width: 180px; }
+
+  /* ── Toast ── */
+  .toast { font-size: 12px; padding: 10px 16px; width: 90%; max-width: 340px; text-align: center; }
+
+  /* ── Progress wrap max-width override ── */
+  .progress-wrap[style*="max-width"] { max-width: 100% !important; }
+  .stat-row[style*="max-width"]      { max-width: 100% !important; }
+
+  /* ── Mobile card improvements ── */
+  .mobile-card { border-radius: 12px; }
+  .mc-input, .mc-select, .mc-textarea {
+    font-size: 16px; /* prevent iOS zoom */
+    min-height: 44px;
+  }
+  .mc-select { min-height: 44px; padding: 10px; }
+  .mobile-prog-btns .prog-btn {
+    padding: 8px 10px;
+    font-size: 12px;
+    min-height: 36px;
+    flex: 1;
+  }
+  .mobile-prog-btns { gap: 6px; }
+
+  /* ── Reminder banner ── */
+  .reminder-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 12px;
+  }
+  .reminder-banner .btn-primary,
+  .reminder-banner .btn-cancel {
+    width: 100%;
+    padding: 10px;
+    font-size: 13px;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 380px) {
+  .tab-btn { font-size: 9px; padding: 6px 2px; }
+  .dash-cards { grid-template-columns: 1fr 1fr; }
+  .stat-value { font-size: 20px; }
+}
