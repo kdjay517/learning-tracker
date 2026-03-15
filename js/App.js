@@ -258,11 +258,11 @@ class App {
 
     const grid = document.getElementById('coursesGrid');
     if (!grid) return;
+
+    // Only use courseManager.courses — do NOT re-add from assignment counts
+    // (that was causing deleted courses to reappear)
     const all = [...this.courseManager.courses];
-    // Also show courses from assignments not yet in manager
-    Object.keys(counts).forEach(name => {
-      if (!all.find(c => c.name === name)) all.push({ name, color: this.courseManager.getColor(name) });
-    });
+
     if (!all.length) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128218;</div><div class="empty-title">No courses yet</div><div class="empty-sub">Add a course above or type a course name when adding assignments</div></div>';
       return;

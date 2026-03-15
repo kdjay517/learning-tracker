@@ -1,7 +1,3 @@
-// ============================================================
-// CourseManager.js — Manages course colors & names
-// ============================================================
-
 class CourseManager {
   static PALETTE = [
     '#6c63ff','#ff6b9d','#00e5b5','#f5a623','#ff4d6d',
@@ -9,14 +5,14 @@ class CourseManager {
   ];
 
   constructor(courses) {
-    // courses: [{ name, color }]
     this.courses = courses || [];
+    // Track names the user explicitly deleted so sync doesn't re-add them
+    this._deleted = new Set();
   }
 
   getColor(name) {
     const found = this.courses.find(c => c.name === name);
     if (found) return found.color;
-    // Auto-assign a color based on hash
     const idx = Math.abs(CourseManager._hash(name)) % CourseManager.PALETTE.length;
     return CourseManager.PALETTE[idx];
   }
@@ -25,6 +21,7 @@ class CourseManager {
     if (!name || this.courses.find(c => c.name === name)) return;
     const col = color || CourseManager.PALETTE[this.courses.length % CourseManager.PALETTE.length];
     this.courses.push({ name: name.trim(), color: col });
+    this._deleted.delete(name.trim()); // un-mark as deleted if re-added
     this._persist();
   }
 
@@ -41,12 +38,14 @@ class CourseManager {
 
   delete(name) {
     this.courses = this.courses.filter(c => c.name !== name);
+    this._deleted.add(name); // remember this was intentionally deleted
     this._persist();
   }
 
   syncFromAssignments(assignments) {
+    // Only add courses that haven't been intentionally deleted
     assignments.forEach(a => {
-      if (a.courseName && !this.courses.find(c => c.name === a.courseName)) {
+      if (a.courseName && !this._deleted.has(a.courseName) && !this.courses.find(c => c.name === a.courseName)) {
         this.add(a.courseName);
       }
     });
