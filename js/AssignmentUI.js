@@ -1,34 +1,194 @@
 // ============================================================
 // AssignmentUI.js — Renders the Assignment tab
-// Columns: Course, Title, Assigned Date, Due Date, Status, Priority
-// are all inline-editable directly in the table row.
+// Course column uses a custom autocomplete dropdown.
+// If a course isn't in the list the user can type and add it.
 // Actions column has only Delete button.
 // ============================================================
 
 class AssignmentUI {
   constructor(manager) {
     this.manager = manager;
+    this._activeDropdown = null; // tracks open dropdown DOM node
     this._bindControls();
-  }
-
-  _bindControls() {
-    document.getElementById('aFilterStatus').addEventListener('change', e => {
-      this.manager.filterStatus = e.target.value; this.render();
-    });
-    document.getElementById('aFilterPriority').addEventListener('change', e => {
-      this.manager.filterPriority = e.target.value; this.render();
-    });
-    document.getElementById('aSortKey').addEventListener('change', e => {
-      this.manager.sortKey = e.target.value; this.render();
-    });
-    document.getElementById('aAddBtn').addEventListener('click', () => this.openModal());
-    document.getElementById('aModalForm').addEventListener('submit', e => this._handleSubmit(e));
-    document.getElementById('aModalClose').addEventListener('click', () => this.closeModal());
-    document.getElementById('aModalOverlay').addEventListener('click', e => {
-      if (e.target === e.currentTarget) this.closeModal();
+    // Close any open dropdown when clicking outside
+    document.addEventListener('click', e => {
+      if (this._activeDropdown && !this._activeDropdown.contains(e.target)) {
+        this._closeDropdown(this._activeDropdown);
+      }
     });
   }
 
+  // ── Returns deduplicated, sorted list of all course names in use ──
+  _getCourseList() {
+    const names = this.manager.assignments
+      .map(a => a.courseName && a.courseName.trim())
+      .filter(Boolean);
+    return [...new Set(names)].sort();
+  }
+
+  // ── Build the custom course autocomplete widget HTML ──
+  _courseCell(assignmentId, currentValue) {
+    const safe = (currentValue || '').replace(/"/g, '&quot;');
+    return `
+    <div class="course-ac-wrap" id="ac-wrap-${assignmentId}">
+      <input
+        class="inline-input course-ac-input"
+        type="text"
+        value="${safe}"
+        placeholder="Type course…"
+        autocomplete="off"
+        oninput="app.assignmentUI.onCourseInput(${assignmentId}, this)"
+        onfocus="app.assignmentUI.onCourseFocus(${assignmentId}, this)"
+        onkeydown="app.assignmentUI.onCourseKey(event, ${assignmentId}, this)"
+        onblur="app.assignmentUI._onCourseBlur(${assignmentId}, this)"
+      />
+      <div class="course-dropdown" id="ac-drop-${assignmentId}" style="display:none;"></div>
+    </div>`;
+  }
+
+  // ── Show dropdown with filtered + "Add new" option ──
+  _showDropdown(assignmentId, inputEl, query) {
+    const wrap = document.getElementById(`ac-wrap-${assignmentId}`);
+    const drop = document.getElementById(`ac-drop-${assignmentId}`);
+    if (!drop) return;
+
+    const courses = this._getCourseList();
+    const q = (query || '').trim().toLowerCase();
+    const filtered = q ? courses.filter(c => c.toLowerCase().includes(q)) : courses;
+    const exactMatch = courses.some(c => c.toLowerCase() === q);
+
+    let html = filtered.map((c, idx) => `
+      <div class="ac-item" data-idx="${idx}" data-value="${c.replace(/"/g,'&quot;')}"
+        onmousedown="app.assignmentUI.selectCourse(${assignmentId}, '${c.replace(/'/g,"\\'")}')">
+        ${c}
+      </div>`).join('');
+
+    // "Add new" row — show only if typed something not already in list
+    if (q && !exactMatch) {
+      html += `
+        <div class="ac-item ac-add-new"
+          onmousedown="app.assignmentUI.addNewCourse(${assignmentId}, '${query.replace(/'/g,"\\'")}')">
+          <span class="ac-add-icon">+</span> Add "<strong>${query}</strong>"
+        </div>`;
+    }
+
+    if (!html) { drop.style.display = 'none'; return; }
+
+    drop.innerHTML = html;
+    drop.style.display = 'block';
+    this._activeDropdown = wrap;
+  }
+
+  _closeDropdown(wrap) {
+    if (!wrap) return;
+    const drop = wrap.querySelector('.course-dropdown');
+    if (drop) drop.style.display = 'none';
+    this._activeDropdown = null;
+  }
+
+  // ── Event handlers called from inline HTML ──
+  onCourseFocus(id, input) {
+    this._showDropdown(id, input, input.value);
+  }
+
+  onCourseInput(id, input) {
+    this._showDropdown(id, input, input.value);
+  }
+
+  onCourseKey(e, id, input) {
+    const drop = document.getElementById(`ac-drop-${id}`);
+    const items = drop ? [...drop.querySelectorAll('.ac-item')] : [];
+    const active = drop ? drop.querySelector('.ac-item.ac-active') : null;
+    const idx = active ? items.indexOf(active) : -1;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items.forEach(i => i.classList.remove('ac-active'));
+      const next = items[idx + 1] || items[0];
+      if (next) { next.classList.add('ac-active'); next.scrollIntoView({ block: 'nearest' }); }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items.forEach(i => i.classList.remove('ac-active'));
+      const prev = items[idx - 1] || items[items.length - 1];
+      if (prev) { prev.classList.add('ac-active'); prev.scrollIntoView({ block: 'nearest' }); }
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (active) {
+        active.dispatchEvent(new MouseEvent('mousedown'));
+      } else {
+        // Commit whatever is typed
+        this.saveField(id, 'courseName', input.value.trim());
+        this._closeDropdown(document.getElementById(`ac-wrap-${id}`));
+        input.blur();
+      }
+    } else if (e.key === 'Escape') {
+      this._closeDropdown(document.getElementById(`ac-wrap-${id}`));
+      input.blur();
+    }
+  }
+
+  // Mousedown fires before blur so the value is committed before field loses focus
+  selectCourse(id, value) {
+    const input = document.querySelector(`#ac-wrap-${id} .course-ac-input`);
+    if (input) input.value = value;
+    this.saveField(id, 'courseName', value);
+    this._closeDropdown(document.getElementById(`ac-wrap-${id}`));
+  }
+
+  addNewCourse(id, value) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const input = document.querySelector(`#ac-wrap-${id} .course-ac-input`);
+    if (input) input.value = trimmed;
+    this.saveField(id, 'courseName', trimmed);
+    this._closeDropdown(document.getElementById(`ac-wrap-${id}`));
+  }
+
+  // Blur fires after mousedown on dropdown items, so we delay to let mousedown win
+  _onCourseBlur(id, input) {
+    setTimeout(() => {
+      this.saveField(id, 'courseName', input.value.trim());
+      this._closeDropdown(document.getElementById(`ac-wrap-${id}`));
+    }, 150);
+  }
+
+  // ── Also used in the modal's course field ──
+  bindModalCourseAutocomplete() {
+    const input = document.getElementById('aModalCourseInput');
+    const drop  = document.getElementById('aModalCourseDrop');
+    if (!input || !drop) return;
+
+    const show = (q) => {
+      const courses = this._getCourseList();
+      const filtered = q ? courses.filter(c => c.toLowerCase().includes(q.toLowerCase())) : courses;
+      const exactMatch = courses.some(c => c.toLowerCase() === q.toLowerCase());
+      let html = filtered.map(c => `
+        <div class="ac-item" onmousedown="
+          document.getElementById('aModalCourseInput').value='${c.replace(/'/g,"\\'")}';
+          document.getElementById('aModalCourseDrop').style.display='none';">
+          ${c}
+        </div>`).join('');
+      if (q && !exactMatch) {
+        html += `<div class="ac-item ac-add-new" onmousedown="
+          document.getElementById('aModalCourseInput').value='${q.replace(/'/g,"\\'")}';
+          document.getElementById('aModalCourseDrop').style.display='none';">
+          <span class='ac-add-icon'>+</span> Add "<strong>${q}</strong>"
+        </div>`;
+      }
+      drop.innerHTML = html || '';
+      drop.style.display = html ? 'block' : 'none';
+    };
+
+    input.addEventListener('focus', () => show(input.value));
+    input.addEventListener('input', () => show(input.value));
+    input.addEventListener('blur',  () => setTimeout(() => { drop.style.display = 'none'; }, 150));
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Escape') drop.style.display = 'none';
+      if (e.key === 'Enter') { e.preventDefault(); drop.style.display = 'none'; }
+    });
+  }
+
+  // ─────────────────────────────────────────
   render() {
     this._renderStats();
     this._renderTable();
@@ -79,17 +239,12 @@ class AssignmentUI {
       <tr class="anim-row" style="animation-delay:${i * 0.04}s" data-id="${a.id}">
         <td><span class="row-num">${i + 1}</span></td>
 
-        <!-- Editable: Course Name -->
-        <td>
-          <input class="inline-input" type="text" value="${a.courseName || ''}"
-            placeholder="Course…"
-            onblur="app.assignmentUI.saveField(${a.id}, 'courseName', this.value)"
-            onkeydown="if(event.key==='Enter') this.blur()" />
-        </td>
+        <!-- Editable: Course (autocomplete) -->
+        <td>${this._courseCell(a.id, a.courseName)}</td>
 
         <!-- Editable: Title -->
         <td>
-          <input class="inline-input title-input" type="text" value="${a.title}"
+          <input class="inline-input title-input" type="text" value="${a.title.replace(/"/g,'&quot;')}"
             placeholder="Title…"
             onblur="app.assignmentUI.saveField(${a.id}, 'title', this.value)"
             onkeydown="if(event.key==='Enter') this.blur()" />
@@ -148,41 +303,39 @@ class AssignmentUI {
     }).join('');
   }
 
-  // Called by inline onblur / onchange handlers to persist a single field
+  // Called by inline handlers to persist a single field
   saveField(id, field, value) {
     const update = {};
     update[field] = field === 'progress' ? parseInt(value) || 0 : value;
     this.manager.update(id, update);
-    // Re-render stats (counts may change) but avoid full table re-render
-    // so the user doesn't lose focus mid-typing
     this._renderStats();
-    // Re-render days-left badge for the changed row without full table redraw
-    if (field === 'dueDate' || field === 'status' || field === 'priority') {
+    if (field === 'dueDate' || field === 'status' || field === 'priority' || field === 'courseName') {
       this._renderTable();
     }
   }
 
   openModal(assignment = null) {
-    const form = document.getElementById('aModalForm');
+    const form  = document.getElementById('aModalForm');
     const title = document.getElementById('aModalTitle');
     form.reset();
     if (assignment) {
       title.textContent = 'Edit Assignment';
       this.manager.editingId = assignment.id;
-      form.aCourseName.value = assignment.courseName;
-      form.aTitle.value = assignment.title;
-      form.aAssignedDate.value = assignment.assignedDate;
-      form.aDueDate.value = assignment.dueDate;
-      form.aStatus.value = assignment.status;
-      form.aPriority.value = assignment.priority;
-      form.aProgress.value = assignment.progress;
-      form.aSubmission.value = assignment.submissionType;
+      document.getElementById('aModalCourseInput').value = assignment.courseName;
+      form.aTitle.value         = assignment.title;
+      form.aAssignedDate.value  = assignment.assignedDate;
+      form.aDueDate.value       = assignment.dueDate;
+      form.aStatus.value        = assignment.status;
+      form.aPriority.value      = assignment.priority;
+      form.aProgress.value      = assignment.progress;
+      form.aSubmission.value    = assignment.submissionType;
       form.aCompletedDate.value = assignment.completedDate;
     } else {
       title.textContent = 'Add Assignment';
       this.manager.editingId = null;
     }
     document.getElementById('aModalOverlay').classList.add('active');
+    this.bindModalCourseAutocomplete();
   }
 
   closeModal() {
@@ -194,15 +347,15 @@ class AssignmentUI {
     e.preventDefault();
     const form = e.target;
     const data = {
-      courseName: form.aCourseName.value.trim(),
-      title: form.aTitle.value.trim(),
-      assignedDate: form.aAssignedDate.value,
-      dueDate: form.aDueDate.value,
-      status: form.aStatus.value,
-      priority: form.aPriority.value,
-      progress: parseInt(form.aProgress.value) || 0,
+      courseName:     document.getElementById('aModalCourseInput').value.trim(),
+      title:          form.aTitle.value.trim(),
+      assignedDate:   form.aAssignedDate.value,
+      dueDate:        form.aDueDate.value,
+      status:         form.aStatus.value,
+      priority:       form.aPriority.value,
+      progress:       parseInt(form.aProgress.value) || 0,
       submissionType: form.aSubmission.value,
-      completedDate: form.aCompletedDate.value,
+      completedDate:  form.aCompletedDate.value,
     };
     if (this.manager.editingId) {
       this.manager.update(this.manager.editingId, data);

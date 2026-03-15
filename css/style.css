@@ -763,6 +763,72 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
 /* Style the dropdown options so they're readable */
 .inline-select option { background: var(--surface2); color: var(--text); }
 
+/* ===== COURSE AUTOCOMPLETE ===== */
+.course-ac-wrap {
+  position: relative;
+  width: 100%;
+}
+.course-ac-input {
+  width: 100%;
+}
+/* Style the modal course input same as other form inputs */
+#aModalCourseInput {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+}
+#aModalCourseInput:focus { border-color: var(--accent); }
+
+.course-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  z-index: 999;
+  max-height: 200px;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.ac-item {
+  padding: 9px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.ac-active {
+  background: rgba(108,99,255,0.15);
+  color: var(--accent);
+}
+.ac-add-new {
+  color: var(--acc3);
+  font-style: italic;
+}
+.ac-add-new:hover, .ac-add-new.ac-active {
+  background: rgba(0,229,181,0.1);
+  color: var(--acc3);
+}
+.ac-add-icon {
+  font-weight: 700;
+  font-size: 15px;
+  margin-right: 4px;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .cards-row { grid-template-columns: 1fr; }

@@ -205,7 +205,10 @@
       <div class="form-grid">
         <div class="form-group full">
           <label>Course Name</label>
-          <input type="text" name="aCourseName" placeholder="e.g. Mathematics, Physics…" />
+          <div class="course-ac-wrap" style="position:relative;">
+            <input type="text" id="aModalCourseInput" class="course-ac-input" placeholder="e.g. Mathematics, Physics…" autocomplete="off" />
+            <div class="course-dropdown" id="aModalCourseDrop" style="display:none;"></div>
+          </div>
         </div>
         <div class="form-group full">
           <label>Assignment Title *</label>
