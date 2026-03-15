@@ -1,5 +1,8 @@
 // ============================================================
 // AssignmentUI.js — Renders the Assignment tab
+// Columns: Course, Title, Assigned Date, Due Date, Status, Priority
+// are all inline-editable directly in the table row.
+// Actions column has only Delete button.
 // ============================================================
 
 class AssignmentUI {
@@ -42,12 +45,10 @@ class AssignmentUI {
     document.getElementById('aProgressBar').style.width = pct + '%';
     document.getElementById('aProgressPct').textContent = pct + '%';
 
-    // Priority breakdown
     document.getElementById('aPriorityHigh').textContent = s.high;
     document.getElementById('aPriorityMedium').textContent = s.medium;
     document.getElementById('aPriorityLow').textContent = s.low;
 
-    // Course counts
     const courseContainer = document.getElementById('aCourseList');
     courseContainer.innerHTML = Object.entries(s.courseCounts)
       .sort((a, b) => b[1] - a[1])
@@ -62,7 +63,7 @@ class AssignmentUI {
     const tbody = document.getElementById('aTableBody');
     const items = this.manager.getFiltered();
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="10" class="empty-row">No assignments found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-row">No assignments found.</td></tr>`;
       return;
     }
     tbody.innerHTML = items.map((a, i) => {
@@ -75,29 +76,90 @@ class AssignmentUI {
         else { daysLabel = `${daysLeft}d left`; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
       }
       return `
-      <tr class="anim-row" style="animation-delay:${i * 0.04}s">
+      <tr class="anim-row" style="animation-delay:${i * 0.04}s" data-id="${a.id}">
         <td><span class="row-num">${i + 1}</span></td>
-        <td class="course-cell">${a.courseName || '<span class="muted">—</span>'}</td>
-        <td class="title-cell">${a.title}</td>
-        <td>${a.assignedDate || '—'}</td>
-        <td>${a.dueDate || '—'}</td>
+
+        <!-- Editable: Course Name -->
+        <td>
+          <input class="inline-input" type="text" value="${a.courseName || ''}"
+            placeholder="Course…"
+            onblur="app.assignmentUI.saveField(${a.id}, 'courseName', this.value)"
+            onkeydown="if(event.key==='Enter') this.blur()" />
+        </td>
+
+        <!-- Editable: Title -->
+        <td>
+          <input class="inline-input title-input" type="text" value="${a.title}"
+            placeholder="Title…"
+            onblur="app.assignmentUI.saveField(${a.id}, 'title', this.value)"
+            onkeydown="if(event.key==='Enter') this.blur()" />
+        </td>
+
+        <!-- Editable: Assigned Date -->
+        <td>
+          <input class="inline-input inline-date" type="date" value="${a.assignedDate || ''}"
+            onchange="app.assignmentUI.saveField(${a.id}, 'assignedDate', this.value)" />
+        </td>
+
+        <!-- Editable: Due Date -->
+        <td>
+          <input class="inline-input inline-date" type="date" value="${a.dueDate || ''}"
+            onchange="app.assignmentUI.saveField(${a.id}, 'dueDate', this.value)" />
+        </td>
+
+        <!-- Days Left (computed, read-only) -->
         <td><span class="days-badge ${daysClass}">${daysLabel}</span></td>
-        <td><span class="status-badge status-${a.status.replace(' ', '-').toLowerCase()}">${a.status}</span></td>
-        <td><span class="priority-badge priority-${a.priority.toLowerCase()}">${a.priority}</span></td>
+
+        <!-- Editable: Status -->
+        <td>
+          <select class="inline-select status-select status-${a.status.replace(' ','-').toLowerCase()}"
+            onchange="app.assignmentUI.saveField(${a.id}, 'status', this.value); this.className='inline-select status-select status-'+this.value.replace(' ','-').toLowerCase();">
+            <option ${a.status==='Pending'?'selected':''}>Pending</option>
+            <option ${a.status==='In Progress'?'selected':''}>In Progress</option>
+            <option ${a.status==='Completed'?'selected':''}>Completed</option>
+          </select>
+        </td>
+
+        <!-- Editable: Priority -->
+        <td>
+          <select class="inline-select priority-select priority-${a.priority.toLowerCase()}"
+            onchange="app.assignmentUI.saveField(${a.id}, 'priority', this.value); this.className='inline-select priority-select priority-'+this.value.toLowerCase();">
+            <option ${a.priority==='High'?'selected':''}>High</option>
+            <option ${a.priority==='Medium'?'selected':''}>Medium</option>
+            <option ${a.priority==='Low'?'selected':''}>Low</option>
+          </select>
+        </td>
+
+        <!-- Progress (read-only) -->
         <td>
           <div class="progress-cell">
             <div class="mini-bar"><div class="mini-fill" style="width:${a.progress}%"></div></div>
             <span>${a.progress}%</span>
           </div>
         </td>
+
+        <!-- Actions: Delete only -->
         <td>
           <div class="action-btns">
-            <button class="btn-icon edit-btn" onclick="app.editAssignment(${a.id})" title="Edit">✏️</button>
             <button class="btn-icon del-btn" onclick="app.deleteAssignment(${a.id})" title="Delete">🗑️</button>
           </div>
         </td>
       </tr>`;
     }).join('');
+  }
+
+  // Called by inline onblur / onchange handlers to persist a single field
+  saveField(id, field, value) {
+    const update = {};
+    update[field] = field === 'progress' ? parseInt(value) || 0 : value;
+    this.manager.update(id, update);
+    // Re-render stats (counts may change) but avoid full table re-render
+    // so the user doesn't lose focus mid-typing
+    this._renderStats();
+    // Re-render days-left badge for the changed row without full table redraw
+    if (field === 'dueDate' || field === 'status' || field === 'priority') {
+      this._renderTable();
+    }
   }
 
   openModal(assignment = null) {
