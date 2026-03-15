@@ -756,6 +756,24 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   .charts-row { grid-template-columns: 1fr; }
 }
 
+.duration-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(0,229,181,0.12);
+  color: var(--accent3);
+  border: 1px solid rgba(0,229,181,0.3);
+  white-space: nowrap;
+}
+
+.dur-input {
+  width: 70px !important;
+  min-width: 70px !important;
+  text-align: center;
+}
+
 /* ===== INLINE EDITABLE TABLE CELLS ===== */
 .inline-input {
   background: transparent;

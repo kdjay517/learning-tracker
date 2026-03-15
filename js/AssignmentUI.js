@@ -304,18 +304,18 @@ class AssignmentUI {
     const tbody = document.getElementById('aTableBody');
     const items = this.manager.getFiltered();
     if (!items.length) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-row">No assignments found.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="empty-row">No assignments found.</td></tr>';
       return;
     }
     tbody.innerHTML = items.map((a, i) => {
       const daysLeft = a.daysLeft;
       let daysLabel = '—', daysClass = '';
       if (daysLeft !== null) {
-        if (daysLeft < 0)      { daysLabel = Math.abs(daysLeft) + 'd overdue'; daysClass = 'overdue'; }
+        if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft) + 'd overdue'; daysClass = 'overdue'; }
         else if (daysLeft === 0) { daysLabel = 'Due today'; daysClass = 'due-today'; }
-        else                   { daysLabel = daysLeft + 'd left'; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
+        else                     { daysLabel = daysLeft + 'd left'; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
       }
-      const statusCls  = 'status-'   + a.status.replace(' ', '-').toLowerCase();
+      const statusCls   = 'status-'   + a.status.replace(' ', '-').toLowerCase();
       const priorityCls = 'priority-' + a.priority.toLowerCase();
       return '<tr class="anim-row" style="animation-delay:' + (i * 0.04) + 's" data-id="' + a.id + '">'
         + '<td><span class="row-num">' + (i + 1) + '</span></td>'
@@ -323,6 +323,7 @@ class AssignmentUI {
         + '<td><input class="inline-input title-input" type="text" value="' + a.title.replace(/"/g, '&quot;') + '" placeholder="Title..." onblur="app.assignmentUI.saveField(' + a.id + ', \'title\', this.value)" onkeydown="if(event.key===\'Enter\') this.blur()" /></td>'
         + '<td><input class="inline-input inline-date" type="date" value="' + (a.assignedDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" /></td>'
         + '<td><input class="inline-input inline-date" type="date" value="' + (a.dueDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" /></td>'
+        + '<td><input class="inline-input dur-input" type="number" min="0" step="0.5" value="' + (a.durationHours || '') + '" placeholder="hrs" onblur="app.assignmentUI.saveField(' + a.id + ', \'durationHours\', this.value)" onkeydown="if(event.key===\'Enter\') this.blur()" /></td>'
         + '<td><span class="days-badge ' + daysClass + '">' + daysLabel + '</span></td>'
         + '<td><select class="inline-select status-select ' + statusCls + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'status\', this.value); this.className=\'inline-select status-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
           + '<option' + (a.status === 'Pending'     ? ' selected' : '') + '>Pending</option>'
@@ -345,7 +346,7 @@ class AssignmentUI {
     update[field] = field === 'progress' ? (parseInt(value) || 0) : value;
     this.manager.update(id, update);
     this._renderStats();
-    if (field === 'dueDate') {
+    if (field === 'dueDate' || field === 'assignedDate') {
       this._updateDaysLeftBadge(id);
     } else if (field === 'status' || field === 'priority' || field === 'courseName') {
       this._renderTable();
@@ -357,16 +358,18 @@ class AssignmentUI {
     if (!a) return;
     const row = document.querySelector('tr[data-id="' + id + '"]');
     if (!row) return;
-    const cell = row.querySelectorAll('td')[5];
-    if (!cell) return;
+    const cells = row.querySelectorAll('td');
+    // Days Left cell is at index 6 (after #, course, title, assigned, due, duration)
+    const daysCell = cells[6];
+    if (!daysCell) return;
     const daysLeft = a.daysLeft;
-    let label = '---', cls = '';
+    let label = '—', cls = '';
     if (daysLeft !== null) {
-      if (daysLeft < 0) { label = Math.abs(daysLeft) + 'd overdue'; cls = 'overdue'; }
+      if (daysLeft < 0)        { label = Math.abs(daysLeft) + 'd overdue'; cls = 'overdue'; }
       else if (daysLeft === 0) { label = 'Due today'; cls = 'due-today'; }
-      else { label = daysLeft + 'd left'; cls = daysLeft <= 3 ? 'due-soon' : ''; }
+      else                     { label = daysLeft + 'd left'; cls = daysLeft <= 3 ? 'due-soon' : ''; }
     }
-    cell.innerHTML = '<span class="days-badge ' + cls + '">' + label + '</span>';
+    daysCell.innerHTML = '<span class="days-badge ' + cls + '">' + label + '</span>';
   }
 
   openModal(assignment) {

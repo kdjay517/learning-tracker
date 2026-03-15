@@ -1,30 +1,27 @@
-// ============================================================
-// Assignment.js — OOP model for a single assignment
-// ============================================================
-
 class Assignment {
-  static STATUS = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', PENDING: 'Pending' };
-  static PRIORITY = { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' };
+  static STATUS     = { COMPLETED: 'Completed', IN_PROGRESS: 'In Progress', PENDING: 'Pending' };
+  static PRIORITY   = { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' };
   static SUBMISSION = ['Physical Submission', 'Google Form', 'Email Submission', 'Online Upload'];
 
-  constructor({ id, courseName, title, assignedDate, dueDate, status, priority, progress, submissionType, completedDate } = {}) {
-    this.id = id || Date.now();
-    this.courseName = courseName || '';
-    this.title = title || '';
-    this.assignedDate = assignedDate || '';
-    this.dueDate = dueDate || '';
-    this.status = status || Assignment.STATUS.PENDING;
-    this.priority = priority || Assignment.STATUS.MEDIUM;
-    this.progress = progress || 0;
+  constructor({ id, courseName, title, assignedDate, dueDate, status, priority, progress, submissionType, completedDate, durationHours } = {}) {
+    this.id             = id || Date.now();
+    this.courseName     = courseName     || '';
+    this.title          = title          || '';
+    this.assignedDate   = assignedDate   || '';
+    this.dueDate        = dueDate        || '';
+    this.status         = status         || 'Pending';
+    this.priority       = priority       || 'Medium';
+    this.progress       = progress       || 0;
     this.submissionType = submissionType || Assignment.SUBMISSION[0];
-    this.completedDate = completedDate || '';
+    this.completedDate  = completedDate  || '';
+    this.durationHours  = durationHours  || '';
   }
 
   get daysLeft() {
     if (!this.dueDate) return null;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const due = new Date(this.dueDate);
+    const due  = new Date(this.dueDate);
     const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
     return diff;
   }
@@ -43,7 +40,8 @@ class Assignment {
       id: this.id, courseName: this.courseName, title: this.title,
       assignedDate: this.assignedDate, dueDate: this.dueDate,
       status: this.status, priority: this.priority, progress: this.progress,
-      submissionType: this.submissionType, completedDate: this.completedDate
+      submissionType: this.submissionType, completedDate: this.completedDate,
+      durationHours: this.durationHours
     };
   }
 
