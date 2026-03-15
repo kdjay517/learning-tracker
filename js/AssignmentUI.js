@@ -2,6 +2,8 @@ class AssignmentUI {
   constructor(manager) {
     this.manager = manager;
     this._activeDropdown = null;
+    this._archiveMode = false;
+    this._searchQuery = '';
     this._bindControls();
     document.addEventListener('click', (e) => {
       if (this._activeDropdown && !this._activeDropdown.contains(e.target)) {
@@ -11,24 +13,33 @@ class AssignmentUI {
   }
 
   _bindControls() {
-    const safe = (id, ev, fn) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener(ev, fn);
-    };
-    safe('aFilterStatus',   'change', (e) => { this.manager.filterStatus   = e.target.value; this.render(); });
+    const safe = (id, ev, fn) => { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); };
+    safe('aFilterStatus',   'change', (e) => { this.manager.filterStatus = e.target.value; this.render(); });
     safe('aFilterPriority', 'change', (e) => { this.manager.filterPriority = e.target.value; this.render(); });
-    safe('aSortKey',        'change', (e) => { this.manager.sortKey        = e.target.value; this.render(); });
+    safe('aSortKey',        'change', (e) => { this.manager.sortKey = e.target.value; this.render(); });
     safe('aAddBtn',         'click',  ()  => this.openModal());
     safe('aModalForm',      'submit', (e) => this._handleSubmit(e));
     safe('aModalClose',     'click',  ()  => this.closeModal());
+    safe('aSearch', 'input', (e) => { this._searchQuery = e.target.value.toLowerCase().trim(); this._renderTable(); });
+    safe('aArchiveToggle', 'click', () => {
+      this._archiveMode = !this._archiveMode;
+      const btn = document.getElementById('aArchiveToggle');
+      if (btn) btn.innerHTML = this._archiveMode ? '&#128194; Hide Completed' : '&#128194; Show All';
+      this._renderTable();
+    });
     const ov = document.getElementById('aModalOverlay');
     if (ov) ov.addEventListener('click', (e) => { if (e.target === e.currentTarget) this.closeModal(); });
+
+    // Scroll hint - hide after first scroll
+    const scroll = document.getElementById('aTableScroll');
+    if (scroll) scroll.addEventListener('scroll', () => {
+      const hint = document.getElementById('scrollHint');
+      if (hint) hint.style.display = 'none';
+    }, { once: true });
   }
 
   _getCourseList() {
-    const names = this.manager.assignments
-      .map((a) => a.courseName && a.courseName.trim())
-      .filter(Boolean);
+    const names = this.manager.assignments.map((a) => a.courseName && a.courseName.trim()).filter(Boolean);
     return [...new Set(names)].sort();
   }
 
@@ -52,17 +63,10 @@ class AssignmentUI {
     const q = (query || '').trim().toLowerCase();
     const filtered = q ? courses.filter((c) => c.toLowerCase().includes(q)) : courses;
     const exactMatch = courses.some((c) => c.toLowerCase() === q);
-    let html = filtered.map((c) =>
-      '<div class="ac-item" onmousedown="app.assignmentUI.selectCourse(' + assignmentId + ', \'' + c.replace(/'/g, "\\'") + '\')">' + c + '</div>'
-    ).join('');
-    if (q && !exactMatch) {
-      html += '<div class="ac-item ac-add-new" onmousedown="app.assignmentUI.addNewCourse(' + assignmentId + ', \'' + query.replace(/'/g, "\\'") + '\')">'
-            + '<span class="ac-add-icon">+</span> Add "' + query + '"</div>';
-    }
+    let html = filtered.map((c) => '<div class="ac-item" onmousedown="app.assignmentUI.selectCourse(' + assignmentId + ', \'' + c.replace(/'/g, "\\'") + '\')">' + c + '</div>').join('');
+    if (q && !exactMatch) html += '<div class="ac-item ac-add-new" onmousedown="app.assignmentUI.addNewCourse(' + assignmentId + ', \'' + query.replace(/'/g, "\\'") + '\')"><span class="ac-add-icon">+</span> Add "' + query + '"</div>';
     if (!html) { drop.style.display = 'none'; return; }
-    drop.innerHTML = html;
-    drop.style.display = 'block';
-    this._activeDropdown = wrap;
+    drop.innerHTML = html; drop.style.display = 'block'; this._activeDropdown = wrap;
   }
 
   _closeDropdown(wrap) {
@@ -80,23 +84,10 @@ class AssignmentUI {
     const items = drop ? Array.from(drop.querySelectorAll('.ac-item')) : [];
     const active = drop ? drop.querySelector('.ac-item.ac-active') : null;
     const idx = active ? items.indexOf(active) : -1;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      items.forEach((i) => i.classList.remove('ac-active'));
-      const next = items[idx + 1] || items[0];
-      if (next) { next.classList.add('ac-active'); next.scrollIntoView({ block: 'nearest' }); }
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      items.forEach((i) => i.classList.remove('ac-active'));
-      const prev = items[idx - 1] || items[items.length - 1];
-      if (prev) { prev.classList.add('ac-active'); prev.scrollIntoView({ block: 'nearest' }); }
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (active) { active.dispatchEvent(new MouseEvent('mousedown')); }
-      else { this.saveField(id, 'courseName', input.value.trim()); this._closeDropdown(document.getElementById('ac-wrap-' + id)); input.blur(); }
-    } else if (e.key === 'Escape') {
-      this._closeDropdown(document.getElementById('ac-wrap-' + id)); input.blur();
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); items.forEach(i => i.classList.remove('ac-active')); const next = items[idx+1]||items[0]; if(next){next.classList.add('ac-active');next.scrollIntoView({block:'nearest'});} }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); items.forEach(i => i.classList.remove('ac-active')); const prev = items[idx-1]||items[items.length-1]; if(prev){prev.classList.add('ac-active');prev.scrollIntoView({block:'nearest'});} }
+    else if (e.key === 'Enter') { e.preventDefault(); if(active){active.dispatchEvent(new MouseEvent('mousedown'));}else{this.saveField(id,'courseName',input.value.trim());this._closeDropdown(document.getElementById('ac-wrap-'+id));input.blur();} }
+    else if (e.key === 'Escape') { this._closeDropdown(document.getElementById('ac-wrap-'+id)); input.blur(); }
   }
 
   selectCourse(id, value) {
@@ -107,8 +98,7 @@ class AssignmentUI {
   }
 
   addNewCourse(id, value) {
-    const trimmed = value.trim();
-    if (!trimmed) return;
+    const trimmed = value.trim(); if (!trimmed) return;
     const input = document.querySelector('#ac-wrap-' + id + ' .course-ac-input');
     if (input) input.value = trimmed;
     this.saveField(id, 'courseName', trimmed);
@@ -116,10 +106,7 @@ class AssignmentUI {
   }
 
   _onCourseBlur(id, input) {
-    setTimeout(() => {
-      this.saveField(id, 'courseName', input.value.trim());
-      this._closeDropdown(document.getElementById('ac-wrap-' + id));
-    }, 150);
+    setTimeout(() => { this.saveField(id, 'courseName', input.value.trim()); this._closeDropdown(document.getElementById('ac-wrap-' + id)); }, 150);
   }
 
   bindModalCourseAutocomplete() {
@@ -128,248 +115,254 @@ class AssignmentUI {
     if (!input || !drop) return;
     const show = (q) => {
       const courses = this._getCourseList();
-      const filtered = q ? courses.filter((c) => c.toLowerCase().includes(q.toLowerCase())) : courses;
-      const exactMatch = courses.some((c) => c.toLowerCase() === q.toLowerCase());
-      let html = filtered.map((c) =>
-        '<div class="ac-item" onmousedown="document.getElementById(\'aModalCourseInput\').value=\'' + c.replace(/'/g, "\\'") + '\';document.getElementById(\'aModalCourseDrop\').style.display=\'none\';">' + c + '</div>'
-      ).join('');
-      if (q && !exactMatch) {
-        html += '<div class="ac-item ac-add-new" onmousedown="document.getElementById(\'aModalCourseInput\').value=\'' + q.replace(/'/g, "\\'") + '\';document.getElementById(\'aModalCourseDrop\').style.display=\'none\';"><span class=\'ac-add-icon\'>+</span> Add "' + q + '"</div>';
-      }
-      drop.innerHTML = html || '';
-      drop.style.display = html ? 'block' : 'none';
+      const filtered = q ? courses.filter(c => c.toLowerCase().includes(q.toLowerCase())) : courses;
+      const exact = courses.some(c => c.toLowerCase() === q.toLowerCase());
+      let html = filtered.map(c => '<div class="ac-item" onmousedown="document.getElementById(\'aModalCourseInput\').value=\'' + c.replace(/'/g,"\\'") + '\';document.getElementById(\'aModalCourseDrop\').style.display=\'none\';">' + c + '</div>').join('');
+      if (q && !exact) html += '<div class="ac-item ac-add-new" onmousedown="document.getElementById(\'aModalCourseInput\').value=\'' + q.replace(/'/g,"\\'") + '\';document.getElementById(\'aModalCourseDrop\').style.display=\'none\';"><span class=\'ac-add-icon\'>+</span> Add "' + q + '"</div>';
+      drop.innerHTML = html || ''; drop.style.display = html ? 'block' : 'none';
     };
     input.addEventListener('focus', () => show(input.value));
     input.addEventListener('input', () => show(input.value));
     input.addEventListener('blur',  () => setTimeout(() => { drop.style.display = 'none'; }, 150));
-    input.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') drop.style.display = 'none';
-      if (e.key === 'Enter')  { e.preventDefault(); drop.style.display = 'none'; }
-    });
+    input.addEventListener('keydown', e => { if(e.key==='Escape') drop.style.display='none'; if(e.key==='Enter'){e.preventDefault();drop.style.display='none';} });
   }
 
-  render() {
-    this._renderStats();
-    this._renderTable();
+  render() { this._renderStats(); this._renderTable(); }
+
+  _getFilteredItems() {
+    let items = this.manager.getFiltered();
+    if (!this._archiveMode) items = items.filter(a => a.status !== 'Completed');
+    if (this._searchQuery) items = items.filter(a => (a.title||'').toLowerCase().includes(this._searchQuery) || (a.courseName||'').toLowerCase().includes(this._searchQuery));
+    return items;
   }
 
   _renderStats() {
+    // Charts follow current filter
+    const filtered = this._getFilteredItems();
+    const all = this.manager.assignments;
+
+    // Stats always show all data
     const s = this.manager.stats;
     document.getElementById('aStatTotal').textContent     = s.total;
     document.getElementById('aStatCompleted').textContent = s.completed;
     document.getElementById('aStatProgress').textContent  = s.inProgress;
     document.getElementById('aStatPending').textContent   = s.pending;
-    const pct = s.total ? Math.round((s.completed / s.total) * 100) : 0;
-    document.getElementById('aProgressBar').style.width   = pct + '%';
-    document.getElementById('aProgressPct').textContent   = pct + '%';
+    const pct = s.total ? Math.round((s.completed/s.total)*100) : 0;
+    document.getElementById('aProgressBar').style.width = pct + '%';
+    document.getElementById('aProgressPct').textContent = pct + '%';
     document.getElementById('aPriorityHigh').textContent   = s.high;
     document.getElementById('aPriorityMedium').textContent = s.medium;
     document.getElementById('aPriorityLow').textContent    = s.low;
     const cc = document.getElementById('aCourseList');
-    cc.innerHTML = Object.entries(s.courseCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) =>
-        '<div class="course-tag"><span class="course-name">' + name + '</span><span class="course-count">' + count + '</span></div>'
-      ).join('');
-    this._renderCharts(s);
+    cc.innerHTML = Object.entries(s.courseCounts).sort((a,b)=>b[1]-a[1]).map(([n,c])=>'<div class="course-tag"><span class="course-name">'+n+'</span><span class="course-count">'+c+'</span></div>').join('');
+
+    // Hours summary using filtered data
+    this._renderHoursSummary(filtered);
+
+    // Charts use filtered data
+    this._renderCharts(filtered);
   }
 
-  _renderCharts(s) {
+  _renderHoursSummary(items) {
+    const el = document.getElementById('aHoursSummary');
+    if (!el) return;
+    const withHours = items.filter(a => a.durationHours && parseFloat(a.durationHours) > 0);
+    if (!withHours.length) { el.innerHTML = ''; return; }
+    const total = withHours.reduce((sum, a) => sum + parseFloat(a.durationHours||0), 0);
+    const done  = withHours.filter(a => a.status === 'Completed').reduce((sum,a)=>sum+parseFloat(a.durationHours||0),0);
+    const remaining = total - done;
+    const byCourse = {};
+    withHours.forEach(a => { if(a.courseName) { byCourse[a.courseName] = (byCourse[a.courseName]||0) + parseFloat(a.durationHours||0); } });
+    const topCourse = Object.entries(byCourse).sort((a,b)=>b[1]-a[1])[0];
+    el.innerHTML = '<div class="hours-card">'
+      + '<div class="hours-item"><span class="hours-label">Total hours</span><span class="hours-val">' + total.toFixed(1) + ' hrs</span></div>'
+      + '<div class="hours-item"><span class="hours-label">Completed</span><span class="hours-val" style="color:var(--lo)">' + done.toFixed(1) + ' hrs</span></div>'
+      + '<div class="hours-item"><span class="hours-label">Remaining</span><span class="hours-val" style="color:var(--accent4)">' + remaining.toFixed(1) + ' hrs</span></div>'
+      + (topCourse ? '<div class="hours-item"><span class="hours-label">Most hours</span><span class="hours-val" style="color:var(--accent)">' + topCourse[0] + ' (' + topCourse[1].toFixed(1) + ' hrs)</span></div>' : '')
+      + '</div>';
+  }
+
+  _renderCharts(filteredItems) {
     if (typeof Chart === 'undefined') return;
 
-    // ── 1. Donut — Status ──────────────────────────────────────
+    // Build stats from filtered items
+    const completed  = filteredItems.filter(a => a.status === 'Completed').length;
+    const inProgress = filteredItems.filter(a => a.status === 'In Progress').length;
+    const pending    = filteredItems.filter(a => a.status === 'Pending').length;
+    const high   = filteredItems.filter(a => a.priority === 'High').length;
+    const medium = filteredItems.filter(a => a.priority === 'Medium').length;
+    const low    = filteredItems.filter(a => a.priority === 'Low').length;
+    const courseCounts = {};
+    filteredItems.forEach(a => { if(a.courseName) courseCounts[a.courseName] = (courseCounts[a.courseName]||0)+1; });
+
+    const gridColor = '#2a2f45', tickColor = '#8b90b8';
+
     const donutCtx = document.getElementById('aDonutChart');
     if (donutCtx) {
       if (this._donutChart) this._donutChart.destroy();
-      const total = s.completed + s.inProgress + s.pending;
+      const total = completed + inProgress + pending;
       this._donutChart = new Chart(donutCtx, {
         type: 'doughnut',
-        data: {
-          labels: ['Completed', 'In Progress', 'Pending'],
-          datasets: [{
-            data: [s.completed, s.inProgress, s.pending],
-            backgroundColor: ['#22c55e', '#f5a623', '#ff4d6d'],
-            borderWidth: 0,
-            hoverOffset: 6
-          }]
-        },
-        options: {
-          cutout: '65%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ' ' + ctx.label + ': ' + ctx.raw + ' (' + (total ? Math.round(ctx.raw / total * 100) : 0) + '%)'
-              }
-            }
-          }
-        }
+        data: { labels:['Completed','In Progress','Pending'], datasets:[{data:[completed,inProgress,pending],backgroundColor:['#22c55e','#f5a623','#ff4d6d'],borderWidth:0,hoverOffset:6}] },
+        options: { cutout:'65%', plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>' '+ctx.label+': '+ctx.raw+' ('+(total?Math.round(ctx.raw/total*100):0)+'%)'}}} }
       });
       const legend = document.getElementById('aDonutLegend');
-      if (legend) {
-        const colors = ['#22c55e', '#f5a623', '#ff4d6d'];
-        const labels = ['Completed', 'In Progress', 'Pending'];
-        const vals   = [s.completed, s.inProgress, s.pending];
-        legend.innerHTML = labels.map((l, i) =>
-          '<div class="chart-legend-item">'
-          + '<span class="legend-dot" style="background:' + colors[i] + '"></span>'
-          + '<span class="legend-label">' + l + '</span>'
-          + '<span class="legend-val">' + (total ? Math.round(vals[i]/total*100) : 0) + '%</span>'
-          + '</div>'
-        ).join('');
-      }
+      if (legend) { const colors=['#22c55e','#f5a623','#ff4d6d'],labels=['Completed','In Progress','Pending'],vals=[completed,inProgress,pending]; legend.innerHTML=labels.map((l,i)=>'<div class="chart-legend-item"><span class="legend-dot" style="background:'+colors[i]+'"></span><span class="legend-label">'+l+'</span><span class="legend-val">'+(total?Math.round(vals[i]/total*100):0)+'%</span></div>').join(''); }
     }
 
-    // ── 2. Bar — Course counts ─────────────────────────────────
     const barCtx = document.getElementById('aBarChart');
     if (barCtx) {
       if (this._barChart) this._barChart.destroy();
-      const courses = Object.entries(s.courseCounts).sort((a, b) => b[1] - a[1]);
+      const courses = Object.entries(courseCounts).sort((a,b)=>b[1]-a[1]);
       this._barChart = new Chart(barCtx, {
         type: 'bar',
-        data: {
-          labels: courses.map(([n]) => n),
-          datasets: [{
-            label: 'Assignments',
-            data: courses.map(([, c]) => c),
-            backgroundColor: '#6c63ff99',
-            borderColor: '#6c63ff',
-            borderWidth: 1,
-            borderRadius: 4
-          }]
-        },
+        data: { labels: courses.map(([n])=>n), datasets:[{label:'Assignments',data:courses.map(([,c])=>c),backgroundColor:'#6c63ff99',borderColor:'#6c63ff',borderWidth:1,borderRadius:4}] },
         options: {
-          plugins: { legend: { display: false } },
-          scales: {
-            x: {
-              ticks: { color: '#8b90b8', font: { size: 11 }, maxRotation: 35, minRotation: 25 },
-              grid: { color: '#2a2f45' },
-              title: { display: true, text: 'Course Name', color: '#8b90b8', font: { size: 11, weight: '600' } }
-            },
-            y: {
-              ticks: { color: '#8b90b8', font: { size: 11 }, stepSize: 1 },
-              grid: { color: '#2a2f45' },
-              title: { display: true, text: 'Assignment Counts', color: '#8b90b8', font: { size: 11, weight: '600' } },
-              beginAtZero: true
-            }
-          }
+          plugins:{legend:{display:false}},
+          scales:{
+            x:{ticks:{color:tickColor,font:{size:11},maxRotation:40,minRotation:30,autoSkip:false},grid:{color:gridColor},title:{display:true,text:'Course Name',color:tickColor,font:{size:11,weight:'600'}}},
+            y:{ticks:{color:tickColor,font:{size:11},stepSize:1},grid:{color:gridColor},title:{display:true,text:'Count',color:tickColor,font:{size:11,weight:'600'}},beginAtZero:true}
+          },
+          layout:{padding:{bottom:10}}
         }
       });
     }
 
-    // ── 3. Pie — Priority ──────────────────────────────────────
     const pieCtx = document.getElementById('aPieChart');
     if (pieCtx) {
       if (this._pieChart) this._pieChart.destroy();
-      const total = s.high + s.medium + s.low;
+      const total = high + medium + low;
       this._pieChart = new Chart(pieCtx, {
         type: 'pie',
-        data: {
-          labels: ['High', 'Medium', 'Low'],
-          datasets: [{
-            data: [s.high, s.medium, s.low],
-            backgroundColor: ['#ff4d6d', '#f5a623', '#22c55e'],
-            borderWidth: 0,
-            hoverOffset: 6
-          }]
-        },
-        options: {
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: (ctx) => ' ' + ctx.label + ': ' + ctx.raw + ' (' + (total ? Math.round(ctx.raw / total * 100) : 0) + '%)'
-              }
-            }
-          }
-        }
+        data: { labels:['High','Medium','Low'], datasets:[{data:[high,medium,low],backgroundColor:['#ff4d6d','#f5a623','#22c55e'],borderWidth:0,hoverOffset:6}] },
+        options: { plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>' '+ctx.label+': '+ctx.raw+' ('+(total?Math.round(ctx.raw/total*100):0)+'%)'}}} }
       });
       const legend = document.getElementById('aPieLegend');
-      if (legend) {
-        const colors = ['#ff4d6d', '#f5a623', '#22c55e'];
-        const labels = ['High', 'Medium', 'Low'];
-        const vals   = [s.high, s.medium, s.low];
-        legend.innerHTML = labels.map((l, i) =>
-          '<div class="chart-legend-item">'
-          + '<span class="legend-dot" style="background:' + colors[i] + '"></span>'
-          + '<span class="legend-label">' + l + '</span>'
-          + '<span class="legend-val">' + (total ? Math.round(vals[i]/total*100) : 0) + '%</span>'
-          + '</div>'
-        ).join('');
-      }
+      if (legend) { const colors=['#ff4d6d','#f5a623','#22c55e'],labels=['High','Medium','Low'],vals=[high,medium,low]; legend.innerHTML=labels.map((l,i)=>'<div class="chart-legend-item"><span class="legend-dot" style="background:'+colors[i]+'"></span><span class="legend-label">'+l+'</span><span class="legend-val">'+(total?Math.round(vals[i]/total*100):0)+'%</span></div>').join(''); }
     }
   }
 
   _renderTable() {
     const tbody = document.getElementById('aTableBody');
-    const items = this.manager.getFiltered();
+    const items = this._getFilteredItems();
+
     if (!items.length) {
-      tbody.innerHTML = '<tr><td colspan="10" class="empty-row">No assignments found.</td></tr>';
+      const msg = this._searchQuery
+        ? '<div class="empty-state"><div class="empty-icon">&#128269;</div><div class="empty-title">No results found</div><div class="empty-sub">Try a different search term</div></div>'
+        : (!this._archiveMode
+            ? '<div class="empty-state"><div class="empty-icon">&#127881;</div><div class="empty-title">All caught up!</div><div class="empty-sub">No active assignments. Click "Show All" to see completed ones.</div></div>'
+            : '<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No assignments yet</div><div class="empty-sub">Click "+ Add Assignment" to get started</div></div>');
+      tbody.innerHTML = '<tr><td colspan="12">' + msg + '</td></tr>';
+      this._renderMobileCards(items);
+      this._renderStats();
       return;
     }
+
     tbody.innerHTML = items.map((a, i) => {
       const daysLeft = a.daysLeft;
       let daysLabel = '—', daysClass = '';
       if (daysLeft !== null) {
-        if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft) + 'd overdue'; daysClass = 'overdue'; }
+        if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft)+'d overdue'; daysClass = 'overdue'; }
         else if (daysLeft === 0) { daysLabel = 'Due today'; daysClass = 'due-today'; }
-        else                     { daysLabel = daysLeft + 'd left'; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
+        else                     { daysLabel = daysLeft+'d left'; daysClass = daysLeft <= 3 ? 'due-soon' : ''; }
       }
-      const statusCls   = 'status-'   + a.status.replace(' ', '-').toLowerCase();
+      const statusCls   = 'status-'   + a.status.replace(' ','-').toLowerCase();
       const priorityCls = 'priority-' + a.priority.toLowerCase();
-      return '<tr class="anim-row" style="animation-delay:' + (i * 0.04) + 's" data-id="' + a.id + '">'
-        + '<td><span class="row-num">' + (i + 1) + '</span></td>'
-        + '<td>' + this._courseCell(a.id, a.courseName) + '</td>'
-        + '<td><input class="inline-input title-input" type="text" value="' + a.title.replace(/"/g, '&quot;') + '" placeholder="Title..." onblur="app.assignmentUI.saveField(' + a.id + ', \'title\', this.value)" onkeydown="if(event.key===\'Enter\') this.blur()" /></td>'
-        + '<td><input class="inline-input inline-date" type="date" value="' + (a.assignedDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" /></td>'
-        + '<td><input class="inline-input inline-date" type="date" value="' + (a.dueDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" /></td>'
-        + '<td><input class="inline-input dur-input" type="number" min="0" step="0.5" value="' + (a.durationHours || '') + '" placeholder="hrs" onblur="app.assignmentUI.saveField(' + a.id + ', \'durationHours\', this.value)" onkeydown="if(event.key===\'Enter\') this.blur()" /></td>'
-        + '<td><span class="days-badge ' + daysClass + '">' + daysLabel + '</span></td>'
-        + '<td><select class="inline-select status-select ' + statusCls + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'status\', this.value); this.className=\'inline-select status-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
-          + '<option' + (a.status === 'Pending'     ? ' selected' : '') + '>Pending</option>'
-          + '<option' + (a.status === 'In Progress' ? ' selected' : '') + '>In Progress</option>'
-          + '<option' + (a.status === 'Completed'   ? ' selected' : '') + '>Completed</option>'
-          + '</select></td>'
-        + '<td><select class="inline-select priority-select ' + priorityCls + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'priority\', this.value); this.className=\'inline-select priority-select priority-\'+this.value.toLowerCase();">'
-          + '<option' + (a.priority === 'High'   ? ' selected' : '') + '>High</option>'
-          + '<option' + (a.priority === 'Medium' ? ' selected' : '') + '>Medium</option>'
-          + '<option' + (a.priority === 'Low'    ? ' selected' : '') + '>Low</option>'
-          + '</select></td>'
-        + '<td><div class="progress-cell"><div class="mini-bar"><div class="mini-fill" style="width:' + a.progress + '%"></div></div><span>' + a.progress + '%</span></div></td>'
-        + '<td><div class="action-btns"><button class="btn-icon del-btn" onclick="app.deleteAssignment(' + a.id + ')" title="Delete">&#128465;&#65039;</button></div></td>'
-        + '</tr>';
+      const progBtns = [25,50,75,100].map(p =>
+        '<button class="prog-btn'+(a.progress===p?' prog-active':'')+'" onclick="app.assignmentUI.saveField('+a.id+',\'progress\','+p+')">'+p+'%</button>'
+      ).join('');
+      const notesSafe = (a.notes||'').replace(/"/g,'&quot;').replace(/\n/g,' ');
+
+      return '<tr class="anim-row'+(a.status==='Completed'?' row-completed':'')+'" style="animation-delay:'+(i*0.04)+'s" data-id="'+a.id+'">'
+        +'<td><span class="row-num">'+(i+1)+'</span></td>'
+        +'<td>'+this._courseCell(a.id, a.courseName)+'</td>'
+        +'<td><input class="inline-input title-input" type="text" value="'+a.title.replace(/"/g,'&quot;')+'" placeholder="Title..." onblur="app.assignmentUI.saveField('+a.id+',\'title\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
+        +'<td><input class="inline-input inline-date" type="date" value="'+(a.assignedDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" /></td>'
+        +'<td><input class="inline-input inline-date" type="date" value="'+(a.dueDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" /></td>'
+        +'<td><input class="inline-input dur-input" type="number" min="0" step="0.5" value="'+(a.durationHours||'')+'" placeholder="hrs" onblur="app.assignmentUI.saveField('+a.id+',\'durationHours\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
+        +'<td><span class="days-badge '+daysClass+'">'+daysLabel+'</span></td>'
+        +'<td><select class="inline-select status-select '+statusCls+'" onchange="app.assignmentUI.saveField('+a.id+',\'status\',this.value);this.className=\'inline-select status-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
+          +'<option'+(a.status==='Pending'?' selected':'')+'>Pending</option>'
+          +'<option'+(a.status==='In Progress'?' selected':'')+'>In Progress</option>'
+          +'<option'+(a.status==='Completed'?' selected':'')+'>Completed</option>'
+          +'</select></td>'
+        +'<td><select class="inline-select priority-select '+priorityCls+'" onchange="app.assignmentUI.saveField('+a.id+',\'priority\',this.value);this.className=\'inline-select priority-select priority-\'+this.value.toLowerCase();">'
+          +'<option'+(a.priority==='High'?' selected':'')+'>High</option>'
+          +'<option'+(a.priority==='Medium'?' selected':'')+'>Medium</option>'
+          +'<option'+(a.priority==='Low'?' selected':'')+'>Low</option>'
+          +'</select></td>'
+        +'<td><div class="progress-cell"><div class="mini-bar"><div class="mini-fill" style="width:'+a.progress+'%"></div></div><span>'+a.progress+'%</span><div class="prog-btns">'+progBtns+'</div></div></td>'
+        +'<td><input class="inline-input notes-input" type="text" value="'+notesSafe+'" placeholder="Notes..." onblur="app.assignmentUI.saveField('+a.id+',\'notes\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" title="'+(a.notes||'')+'" /></td>'
+        +'<td><div class="action-btns"><button class="btn-icon del-btn" onclick="app.deleteAssignment('+a.id+')" title="Delete">&#128465;&#65039;</button></div></td>'
+        +'</tr>';
+    }).join('');
+
+    this._renderMobileCards(items);
+    this._renderStats();
+  }
+
+  _renderMobileCards(items) {
+    const container = document.getElementById('aMobileCards');
+    if (!container) return;
+    if (!items.length) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">&#127881;</div><div class="empty-title">No assignments</div></div>';
+      return;
+    }
+    container.innerHTML = items.map(a => {
+      const daysLeft = a.daysLeft;
+      let daysLabel = '—', daysClass = '';
+      if (daysLeft !== null) {
+        if (daysLeft < 0)        { daysLabel = Math.abs(daysLeft)+'d overdue'; daysClass = 'overdue'; }
+        else if (daysLeft === 0) { daysLabel = 'Due today'; daysClass = 'due-today'; }
+        else                     { daysLabel = daysLeft+'d left'; }
+      }
+      const statusCls   = 'status-'   + a.status.replace(' ','-').toLowerCase();
+      const priorityCls = 'priority-' + a.priority.toLowerCase();
+      const progBtns = [25,50,75,100].map(p =>
+        '<button class="prog-btn'+(a.progress===p?' prog-active':'')+'" onclick="app.assignmentUI.saveField('+a.id+',\'progress\','+p+')">'+p+'%</button>'
+      ).join('');
+      return '<div class="mobile-card'+(a.status==='Completed'?' row-completed':'')+'">'
+        +'<div class="mobile-card-header"><div class="mobile-card-title">'+a.title+'</div><button class="btn-icon del-btn" onclick="app.deleteAssignment('+a.id+')">&#128465;&#65039;</button></div>'
+        +'<div class="mobile-card-course">'+(a.courseName||'No course')+(a.durationHours?' &nbsp;·&nbsp; '+a.durationHours+' hrs':'')+'</div>'
+        +(a.notes ? '<div class="mobile-card-notes">'+a.notes+'</div>' : '')
+        +'<div class="mobile-card-meta"><span class="status-badge '+statusCls+'">'+a.status+'</span><span class="priority-badge '+priorityCls+'">'+a.priority+'</span><span class="days-badge '+daysClass+'">'+daysLabel+'</span></div>'
+        +'<div class="mobile-prog-bar"><div class="mobile-prog-fill" style="width:'+a.progress+'%"></div></div>'
+        +'<div style="font-size:11px;color:var(--text2);margin-top:4px">'+a.progress+'% complete</div>'
+        +'<div class="mobile-prog-btns">'+progBtns+'</div>'
+        +'</div>';
     }).join('');
   }
 
   saveField(id, field, value) {
     const update = {};
-    update[field] = field === 'progress' ? (parseInt(value) || 0) : value;
+    update[field] = field === 'progress' ? (parseInt(value)||0) : value;
     this.manager.update(id, update);
-    this._renderStats();
     if (field === 'dueDate' || field === 'assignedDate') {
       this._updateDaysLeftBadge(id);
-    } else if (field === 'status' || field === 'priority' || field === 'courseName') {
+      this._renderStats();
+    } else if (field === 'status' || field === 'priority' || field === 'courseName' || field === 'progress') {
       this._renderTable();
+    } else {
+      this._renderStats();
     }
   }
 
   _updateDaysLeftBadge(id) {
     const a = this.manager.assignments.find(a => a.id === id);
     if (!a) return;
-    const row = document.querySelector('tr[data-id="' + id + '"]');
+    const row = document.querySelector('tr[data-id="'+id+'"]');
     if (!row) return;
     const cells = row.querySelectorAll('td');
-    // Days Left cell is at index 6 (after #, course, title, assigned, due, duration)
     const daysCell = cells[6];
     if (!daysCell) return;
     const daysLeft = a.daysLeft;
     let label = '—', cls = '';
     if (daysLeft !== null) {
-      if (daysLeft < 0)        { label = Math.abs(daysLeft) + 'd overdue'; cls = 'overdue'; }
+      if (daysLeft < 0)        { label = Math.abs(daysLeft)+'d overdue'; cls = 'overdue'; }
       else if (daysLeft === 0) { label = 'Due today'; cls = 'due-today'; }
-      else                     { label = daysLeft + 'd left'; cls = daysLeft <= 3 ? 'due-soon' : ''; }
+      else                     { label = daysLeft+'d left'; cls = daysLeft<=3?'due-soon':''; }
     }
-    daysCell.innerHTML = '<span class="days-badge ' + cls + '">' + label + '</span>';
+    daysCell.innerHTML = '<span class="days-badge '+cls+'">'+label+'</span>';
   }
 
   openModal(assignment) {
@@ -386,8 +379,10 @@ class AssignmentUI {
       form.aStatus.value        = assignment.status;
       form.aPriority.value      = assignment.priority;
       form.aProgress.value      = assignment.progress;
+      form.aDuration.value      = assignment.durationHours || '';
       form.aSubmission.value    = assignment.submissionType;
       form.aCompletedDate.value = assignment.completedDate;
+      form.aNotes.value         = assignment.notes || '';
     } else {
       title.textContent = 'Add Assignment';
       this.manager.editingId = null;
@@ -411,15 +406,14 @@ class AssignmentUI {
       dueDate:        form.aDueDate.value,
       status:         form.aStatus.value,
       priority:       form.aPriority.value,
-      progress:       parseInt(form.aProgress.value) || 0,
+      progress:       parseInt(form.aProgress.value)||0,
+      durationHours:  form.aDuration.value,
       submissionType: form.aSubmission.value,
       completedDate:  form.aCompletedDate.value,
+      notes:          form.aNotes.value.trim(),
     };
-    if (this.manager.editingId) {
-      this.manager.update(this.manager.editingId, data);
-    } else {
-      this.manager.add(data);
-    }
+    if (this.manager.editingId) { this.manager.update(this.manager.editingId, data); }
+    else { this.manager.add(data); }
     this.closeModal();
     this.render();
   }

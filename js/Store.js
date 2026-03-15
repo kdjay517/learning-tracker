@@ -1,54 +1,81 @@
+// ============================================================
+// Store.js — Firestore persistence, per-user data paths
+// Each user's data is stored under users/{uid}/tracker/
+// ============================================================
+
 class Store {
   static db = null;
 
   static init(firestoreDb) {
     Store.db = firestoreDb;
+    window.addEventListener('online',  () => { Store._online = true;  Store._showToast('Back online — changes synced', 'success'); });
+    window.addEventListener('offline', () => { Store._online = false; Store._showToast('You are offline — changes saved locally', 'warn'); });
+  }
+
+  static _userPath(collection) {
+    const uid = Auth.uid;
+    if (!uid) throw new Error('Not authenticated');
+    return 'users/' + uid + '/tracker/' + collection;
+  }
+
+  static _showToast(msg, type) {
+    const t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg;
+    t.className = 'toast toast-' + type + ' toast-show';
+    clearTimeout(Store._toastTimer);
+    Store._toastTimer = setTimeout(() => { t.classList.remove('toast-show'); }, 3500);
   }
 
   static async saveAssignments(assignments) {
-    if (!Store.db) return;
+    if (!Store.db || !Auth.uid) return;
     try {
       const { doc, setDoc } = window.FirestoreAPI;
-      await setDoc(doc(Store.db, 'tracker', 'assignments'), {
+      await setDoc(doc(Store.db, Store._userPath('assignments')), {
         data: JSON.stringify(assignments.map(a => a.toJSON()))
       });
-    } catch (e) { console.error('saveAssignments:', e); }
+    } catch (e) {
+      console.warn('saveAssignments:', e.message);
+      Store._showToast('Offline — will sync when reconnected', 'warn');
+    }
   }
 
   static async loadAssignments() {
-    if (!Store.db) return Store._defaultAssignments();
+    if (!Store.db || !Auth.uid) return Store._defaultAssignments();
     try {
       const { doc, getDoc } = window.FirestoreAPI;
-      const snap = await getDoc(doc(Store.db, 'tracker', 'assignments'));
+      const snap = await getDoc(doc(Store.db, Store._userPath('assignments')));
       if (!snap.exists()) return Store._defaultAssignments();
       const parsed = JSON.parse(snap.data().data).map(Assignment.fromJSON);
       return parsed.length ? parsed : Store._defaultAssignments();
     } catch (e) {
-      console.error('loadAssignments:', e);
+      console.warn('loadAssignments:', e.message);
       return Store._defaultAssignments();
     }
   }
 
   static async saveHabits(habits) {
-    if (!Store.db) return;
+    if (!Store.db || !Auth.uid) return;
     try {
       const { doc, setDoc } = window.FirestoreAPI;
-      await setDoc(doc(Store.db, 'tracker', 'habits'), {
+      await setDoc(doc(Store.db, Store._userPath('habits')), {
         data: JSON.stringify(habits.map(h => h.toJSON()))
       });
-    } catch (e) { console.error('saveHabits:', e); }
+    } catch (e) {
+      console.warn('saveHabits:', e.message);
+    }
   }
 
   static async loadHabits() {
-    if (!Store.db) return Store._defaultHabits();
+    if (!Store.db || !Auth.uid) return Store._defaultHabits();
     try {
       const { doc, getDoc } = window.FirestoreAPI;
-      const snap = await getDoc(doc(Store.db, 'tracker', 'habits'));
+      const snap = await getDoc(doc(Store.db, Store._userPath('habits')));
       if (!snap.exists()) return Store._defaultHabits();
       const parsed = JSON.parse(snap.data().data).map(Habit.fromJSON);
       return parsed.length ? parsed : Store._defaultHabits();
     } catch (e) {
-      console.error('loadHabits:', e);
+      console.warn('loadHabits:', e.message);
       return Store._defaultHabits();
     }
   }

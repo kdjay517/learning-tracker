@@ -3,7 +3,7 @@ class Assignment {
   static PRIORITY   = { HIGH: 'High', MEDIUM: 'Medium', LOW: 'Low' };
   static SUBMISSION = ['Physical Submission', 'Google Form', 'Email Submission', 'Online Upload'];
 
-  constructor({ id, courseName, title, assignedDate, dueDate, status, priority, progress, submissionType, completedDate, durationHours } = {}) {
+  constructor({ id, courseName, title, assignedDate, dueDate, status, priority, progress, submissionType, completedDate, durationHours, notes } = {}) {
     this.id             = id || Date.now();
     this.courseName     = courseName     || '';
     this.title          = title          || '';
@@ -15,15 +15,14 @@ class Assignment {
     this.submissionType = submissionType || Assignment.SUBMISSION[0];
     this.completedDate  = completedDate  || '';
     this.durationHours  = durationHours  || '';
+    this.notes          = notes          || '';
   }
 
   get daysLeft() {
     if (!this.dueDate) return null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due  = new Date(this.dueDate);
-    const diff = Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-    return diff;
+    const today = new Date(); today.setHours(0,0,0,0);
+    const due   = new Date(this.dueDate);
+    return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
   }
 
   get onTimeLate() {
@@ -41,11 +40,9 @@ class Assignment {
       assignedDate: this.assignedDate, dueDate: this.dueDate,
       status: this.status, priority: this.priority, progress: this.progress,
       submissionType: this.submissionType, completedDate: this.completedDate,
-      durationHours: this.durationHours
+      durationHours: this.durationHours, notes: this.notes
     };
   }
 
-  static fromJSON(data) {
-    return new Assignment(data);
-  }
+  static fromJSON(data) { return new Assignment(data); }
 }
