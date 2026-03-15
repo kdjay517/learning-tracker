@@ -90,7 +90,7 @@ class HabitUI {
     }).join('');
 
     container.innerHTML = headerHtml + overviewHtml + habitsHtml;
-    container.style.gridTemplateColumns = `220px repeat(${days}, 38px)`;
+    container.style.gridTemplateColumns = `280px repeat(${days}, 38px)`;
   }
 
   _renderTopHabits() {
