@@ -171,6 +171,133 @@ class AssignmentUI {
       .map(([name, count]) =>
         '<div class="course-tag"><span class="course-name">' + name + '</span><span class="course-count">' + count + '</span></div>'
       ).join('');
+    this._renderCharts(s);
+  }
+
+  _renderCharts(s) {
+    if (typeof Chart === 'undefined') return;
+
+    // ── 1. Donut — Status ──────────────────────────────────────
+    const donutCtx = document.getElementById('aDonutChart');
+    if (donutCtx) {
+      if (this._donutChart) this._donutChart.destroy();
+      const total = s.completed + s.inProgress + s.pending;
+      this._donutChart = new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed', 'In Progress', 'Pending'],
+          datasets: [{
+            data: [s.completed, s.inProgress, s.pending],
+            backgroundColor: ['#22c55e', '#f5a623', '#ff4d6d'],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          cutout: '65%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ' ' + ctx.label + ': ' + ctx.raw + ' (' + (total ? Math.round(ctx.raw / total * 100) : 0) + '%)'
+              }
+            }
+          }
+        }
+      });
+      const legend = document.getElementById('aDonutLegend');
+      if (legend) {
+        const colors = ['#22c55e', '#f5a623', '#ff4d6d'];
+        const labels = ['Completed', 'In Progress', 'Pending'];
+        const vals   = [s.completed, s.inProgress, s.pending];
+        legend.innerHTML = labels.map((l, i) =>
+          '<div class="chart-legend-item">'
+          + '<span class="legend-dot" style="background:' + colors[i] + '"></span>'
+          + '<span class="legend-label">' + l + '</span>'
+          + '<span class="legend-val">' + (total ? Math.round(vals[i]/total*100) : 0) + '%</span>'
+          + '</div>'
+        ).join('');
+      }
+    }
+
+    // ── 2. Bar — Course counts ─────────────────────────────────
+    const barCtx = document.getElementById('aBarChart');
+    if (barCtx) {
+      if (this._barChart) this._barChart.destroy();
+      const courses = Object.entries(s.courseCounts).sort((a, b) => b[1] - a[1]);
+      this._barChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: courses.map(([n]) => n),
+          datasets: [{
+            label: 'Assignments',
+            data: courses.map(([, c]) => c),
+            backgroundColor: '#6c63ff99',
+            borderColor: '#6c63ff',
+            borderWidth: 1,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              ticks: { color: '#8b90b8', font: { size: 11 }, maxRotation: 35, minRotation: 25 },
+              grid: { color: '#2a2f45' },
+              title: { display: true, text: 'Course Name', color: '#8b90b8', font: { size: 11, weight: '600' } }
+            },
+            y: {
+              ticks: { color: '#8b90b8', font: { size: 11 }, stepSize: 1 },
+              grid: { color: '#2a2f45' },
+              title: { display: true, text: 'Assignment Counts', color: '#8b90b8', font: { size: 11, weight: '600' } },
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    // ── 3. Pie — Priority ──────────────────────────────────────
+    const pieCtx = document.getElementById('aPieChart');
+    if (pieCtx) {
+      if (this._pieChart) this._pieChart.destroy();
+      const total = s.high + s.medium + s.low;
+      this._pieChart = new Chart(pieCtx, {
+        type: 'pie',
+        data: {
+          labels: ['High', 'Medium', 'Low'],
+          datasets: [{
+            data: [s.high, s.medium, s.low],
+            backgroundColor: ['#ff4d6d', '#f5a623', '#22c55e'],
+            borderWidth: 0,
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ' ' + ctx.label + ': ' + ctx.raw + ' (' + (total ? Math.round(ctx.raw / total * 100) : 0) + '%)'
+              }
+            }
+          }
+        }
+      });
+      const legend = document.getElementById('aPieLegend');
+      if (legend) {
+        const colors = ['#ff4d6d', '#f5a623', '#22c55e'];
+        const labels = ['High', 'Medium', 'Low'];
+        const vals   = [s.high, s.medium, s.low];
+        legend.innerHTML = labels.map((l, i) =>
+          '<div class="chart-legend-item">'
+          + '<span class="legend-dot" style="background:' + colors[i] + '"></span>'
+          + '<span class="legend-label">' + l + '</span>'
+          + '<span class="legend-val">' + (total ? Math.round(vals[i]/total*100) : 0) + '%</span>'
+          + '</div>'
+        ).join('');
+      }
+    }
   }
 
   _renderTable() {

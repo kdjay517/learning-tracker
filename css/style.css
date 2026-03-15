@@ -710,6 +710,52 @@ tbody td {
 
 canvas#hOverviewCanvas { width: 100%; display: block; }
 
+/* ===== CHART CARDS ===== */
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.chart-card canvas {
+  max-height: 200px;
+  width: 100% !important;
+}
+.donut-legend, .pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  width: 100%;
+}
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-label { color: var(--text2); flex: 1; }
+.legend-val { color: var(--text); font-weight: 600; font-size: 11px; }
+
+@media (max-width: 900px) {
+  .charts-row { grid-template-columns: 1fr; }
+}
+
 /* ===== INLINE EDITABLE TABLE CELLS ===== */
 .inline-input {
   background: transparent;

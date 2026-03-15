@@ -58,30 +58,29 @@
       </div>
     </div>
 
-    <!-- Info cards -->
-    <div class="cards-row">
-      <div class="info-card">
-        <div class="info-card-title">Priority Breakdown</div>
-        <div class="priority-grid">
-          <div class="priority-item high">
-            <div class="p-count" id="aPriorityHigh">0</div>
-            <div class="p-label">High</div>
-          </div>
-          <div class="priority-item medium">
-            <div class="p-count" id="aPriorityMedium">0</div>
-            <div class="p-label">Medium</div>
-          </div>
-          <div class="priority-item low">
-            <div class="p-count" id="aPriorityLow">0</div>
-            <div class="p-label">Low</div>
-          </div>
-        </div>
+    <!-- Chart cards row -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="info-card-title">Status Overview</div>
+        <canvas id="aDonutChart"></canvas>
+        <div class="donut-legend" id="aDonutLegend"></div>
       </div>
-      <div class="info-card">
-        <div class="info-card-title">Courses</div>
-        <div class="course-list" id="aCourseList"></div>
+      <div class="chart-card">
+        <div class="info-card-title">Assignment Counts by Course</div>
+        <canvas id="aBarChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="info-card-title">Priority Breakdown</div>
+        <canvas id="aPieChart"></canvas>
+        <div class="pie-legend" id="aPieLegend"></div>
       </div>
     </div>
+
+    <!-- Hidden number holders still needed by AssignmentUI stats renderer -->
+    <span id="aPriorityHigh"  style="display:none">0</span>
+    <span id="aPriorityMedium" style="display:none">0</span>
+    <span id="aPriorityLow"   style="display:none">0</span>
+    <div style="display:none" id="aCourseList"></div>
 
     <!-- Toolbar -->
     <div class="toolbar">
@@ -264,14 +263,17 @@
   </div>
 </div>
 
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <!-- JS: Models → Stores → Managers → UIs → App (load order matters) -->
-<script src="js/Assignment.js?v=5"></script>
-<script src="js/Habit.js?v=5"></script>
-<script src="js/Store.js?v=5"></script>
-<script src="js/AssignmentManager.js?v=5"></script>
-<script src="js/HabitManager.js?v=5"></script>
-<script src="js/AssignmentUI.js?v=5"></script>
-<script src="js/HabitUI.js?v=5"></script>
-<script src="js/App.js?v=5"></script>
+<script src="js/Assignment.js?v=6"></script>
+<script src="js/Habit.js?v=6"></script>
+<script src="js/Store.js?v=6"></script>
+<script src="js/AssignmentManager.js?v=6"></script>
+<script src="js/HabitManager.js?v=6"></script>
+<script src="js/AssignmentUI.js?v=6"></script>
+<script src="js/HabitUI.js?v=6"></script>
+<script src="js/App.js?v=6"></script>
 </body>
 </html>
