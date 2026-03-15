@@ -1,15 +1,45 @@
-// ============================================================
-// App.js — Entry point, wires all classes together
-// ============================================================
-
 class App {
   constructor() {
-    this.assignmentManager = new AssignmentManager(Store.loadAssignments());
-    this.habitManager = new HabitManager(Store.loadHabits());
-    this.assignmentUI = new AssignmentUI(this.assignmentManager);
-    this.habitUI = new HabitUI(this.habitManager);
+    // Wait for Firebase module to expose its APIs before booting
+    if (window.FirebaseAppAPI && window.FirestoreAPI) {
+      this._init();
+    } else {
+      window.addEventListener('firebase-ready', () => this._init(), { once: true });
+    }
+  }
+
+  async _init() {
+    document.body.style.opacity = '0.6';
+
+    const { initializeApp } = window.FirebaseAppAPI;
+    const { getFirestore }  = window.FirestoreAPI;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBbmavaWFd0oStqv0TvlYLoiKd2lmHwAPQ",
+      authDomain: "learning-tracker-35421.firebaseapp.com",
+      projectId: "learning-tracker-35421",
+      storageBucket: "learning-tracker-35421.firebasestorage.app",
+      messagingSenderId: "67006399648",
+      appId: "1:67006399648:web:91cd23437276936741b5c5"
+    };
+
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    Store.init(db);
+
+    const [assignments, habits] = await Promise.all([
+      Store.loadAssignments(),
+      Store.loadHabits()
+    ]);
+
+    this.assignmentManager = new AssignmentManager(assignments);
+    this.habitManager      = new HabitManager(habits);
+    this.assignmentUI      = new AssignmentUI(this.assignmentManager);
+    this.habitUI           = new HabitUI(this.habitManager);
+
     this._bindTabs();
     this._showTab('assignments');
+    document.body.style.opacity = '1';
   }
 
   _bindTabs() {
@@ -22,13 +52,7 @@ class App {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
     document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-' + tabId));
     if (tabId === 'assignments') this.assignmentUI.render();
-    if (tabId === 'habits') { this.habitUI.render(); }
-  }
-
-  // Exposed to inline onclick handlers
-  editAssignment(id) {
-    const a = this.assignmentManager.assignments.find(a => a.id === id);
-    if (a) this.assignmentUI.openModal(a);
+    if (tabId === 'habits') this.habitUI.render();
   }
 
   deleteAssignment(id) {
@@ -61,7 +85,6 @@ class App {
   }
 }
 
-// Boot
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new App();
 });

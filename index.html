@@ -266,14 +266,24 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
+<!-- Firebase SDK (modular, exposed as globals) -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getFirestore, doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+  window.FirebaseAppAPI = { initializeApp };
+  window.FirestoreAPI   = { getFirestore, doc, setDoc, getDoc };
+  // Signal that Firebase is ready
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
+
 <!-- JS: Models → Stores → Managers → UIs → App (load order matters) -->
-<script src="js/Assignment.js?v=6"></script>
-<script src="js/Habit.js?v=6"></script>
-<script src="js/Store.js?v=6"></script>
-<script src="js/AssignmentManager.js?v=6"></script>
-<script src="js/HabitManager.js?v=6"></script>
-<script src="js/AssignmentUI.js?v=6"></script>
-<script src="js/HabitUI.js?v=6"></script>
-<script src="js/App.js?v=6"></script>
+<script src="js/Assignment.js?v=7"></script>
+<script src="js/Habit.js?v=7"></script>
+<script src="js/Store.js?v=7"></script>
+<script src="js/AssignmentManager.js?v=7"></script>
+<script src="js/HabitManager.js?v=7"></script>
+<script src="js/AssignmentUI.js?v=7"></script>
+<script src="js/HabitUI.js?v=7"></script>
+<script src="js/App.js?v=7"></script>
 </body>
 </html>
