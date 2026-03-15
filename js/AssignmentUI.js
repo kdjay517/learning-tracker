@@ -194,8 +194,8 @@ class AssignmentUI {
         + '<td><span class="row-num">' + (i + 1) + '</span></td>'
         + '<td>' + this._courseCell(a.id, a.courseName) + '</td>'
         + '<td><input class="inline-input title-input" type="text" value="' + a.title.replace(/"/g, '&quot;') + '" placeholder="Title..." onblur="app.assignmentUI.saveField(' + a.id + ', \'title\', this.value)" onkeydown="if(event.key===\'Enter\') this.blur()" /></td>'
-        + '<td><input class="inline-input inline-date" type="date" value="' + (a.assignedDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" /></td>'
-        + '<td><input class="inline-input inline-date" type="date" value="' + (a.dueDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" /></td>'
+        + '<td><input class="inline-input inline-date" type="date" value="' + (a.assignedDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'assignedDate\', this.value)" /></td>'
+        + '<td><input class="inline-input inline-date" type="date" value="' + (a.dueDate || '') + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" oninput="app.assignmentUI.saveField(' + a.id + ', \'dueDate\', this.value)" /></td>'
         + '<td><span class="days-badge ' + daysClass + '">' + daysLabel + '</span></td>'
         + '<td><select class="inline-select status-select ' + statusCls + '" onchange="app.assignmentUI.saveField(' + a.id + ', \'status\', this.value); this.className=\'inline-select status-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
           + '<option' + (a.status === 'Pending'     ? ' selected' : '') + '>Pending</option>'
@@ -218,9 +218,28 @@ class AssignmentUI {
     update[field] = field === 'progress' ? (parseInt(value) || 0) : value;
     this.manager.update(id, update);
     this._renderStats();
-    if (field === 'dueDate' || field === 'status' || field === 'priority' || field === 'courseName') {
+    if (field === 'dueDate') {
+      this._updateDaysLeftBadge(id);
+    } else if (field === 'status' || field === 'priority' || field === 'courseName') {
       this._renderTable();
     }
+  }
+
+  _updateDaysLeftBadge(id) {
+    const a = this.manager.assignments.find(a => a.id === id);
+    if (!a) return;
+    const row = document.querySelector('tr[data-id="' + id + '"]');
+    if (!row) return;
+    const cell = row.querySelectorAll('td')[5];
+    if (!cell) return;
+    const daysLeft = a.daysLeft;
+    let label = '---', cls = '';
+    if (daysLeft !== null) {
+      if (daysLeft < 0) { label = Math.abs(daysLeft) + 'd overdue'; cls = 'overdue'; }
+      else if (daysLeft === 0) { label = 'Due today'; cls = 'due-today'; }
+      else { label = daysLeft + 'd left'; cls = daysLeft <= 3 ? 'due-soon' : ''; }
+    }
+    cell.innerHTML = '<span class="days-badge ' + cls + '">' + label + '</span>';
   }
 
   openModal(assignment) {
