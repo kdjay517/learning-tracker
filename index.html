@@ -17,6 +17,7 @@
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+<canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;z-index:9998;display:none;"></canvas>
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div class="login-screen" id="loginScreen" style="display:none;">
@@ -53,12 +54,19 @@
     <div class="header-right">
       <button class="theme-toggle" id="themeToggle" title="Toggle light/dark mode">&#9728;&#65039;</button>
       <nav class="tabs">
-        <button class="tab-btn active" data-tab="assignments">&#128203; Assignments</button>
+        <button class="tab-btn active" data-tab="dashboard">&#127968; Dashboard</button>
+      <button class="tab-btn" data-tab="assignments">&#128203; Assignments</button>
         <button class="tab-btn" data-tab="habits">&#9989; Habit Tracker</button>
+      <button class="tab-btn" data-tab="courses">&#127775; Courses</button>
       </nav>
       <div id="userAvatar"></div>
     </div>
   </header>
+
+  <!-- ===== DASHBOARD TAB ===== -->
+  <section id="tab-dashboard" class="tab-panel active">
+    <div id="dashboardContent"></div>
+  </section>
 
   <!-- ===== ASSIGNMENTS TAB ===== -->
   <section id="tab-assignments" class="tab-panel">
@@ -93,18 +101,31 @@
       </select>
       <select id="aSortKey">
         <option value="dueDate">Sort: Due Date</option><option value="priority">Sort: Priority</option><option value="status">Sort: Status</option>
+        <option value="course">Sort: Course</option>
       </select>
       <button class="btn-archive" id="aArchiveToggle">&#128194; Show All</button>
       <div class="toolbar-spacer"></div>
       <button class="btn-primary" id="aAddBtn">+ Add Assignment</button>
     </div>
+    <!-- Bulk action bar -->
+    <div class="bulk-bar" id="aBulkBar" style="display:none;">
+      <span class="bulk-count" id="aBulkCount">0 selected</span>
+      <button class="bulk-btn bulk-complete" id="aBulkComplete">&#9989; Mark Completed</button>
+      <button class="bulk-btn bulk-delete"   id="aBulkDelete">&#128465;&#65039; Delete Selected</button>
+      <button class="bulk-btn bulk-clear"    onclick="app.assignmentManager.clearSelection();app.assignmentUI.render()">&#10005; Clear</button>
+      <div style="flex:1"></div>
+      <button class="bulk-btn export-btn"    id="aExportCSV">&#128196; Export CSV</button>
+      <button class="bulk-btn export-btn"    id="aExportPDF">&#128438; Export PDF</button>
+    </div>
+
     <div class="table-wrap">
       <div class="table-scroll" id="aTableScroll">
         <div class="scroll-hint" id="scrollHint">&#8594; Scroll to see more</div>
         <table>
           <thead>
             <tr>
-              <th>#</th><th>Course &#9998;</th><th>Assignment Title &#9998;</th>
+              <th><input type="checkbox" id="aSelectAll" onchange="app.assignmentUI.toggleSelectAll(this)" /></th>
+              <th>Course &#9998;</th><th>Assignment Title &#9998;</th>
               <th>Assigned &#9998;</th><th>Due Date &#9998;</th>
               <th>Duration (hrs) &#9998;</th><th>Days Left</th>
               <th>Status &#9998;</th><th>Priority &#9998;</th>
@@ -149,6 +170,13 @@
       <div class="h-panel"><div class="h-panel-title">&#127942; Top Habits This Month</div><div id="hTopHabits"></div></div>
       <div class="h-panel"><div class="h-panel-title">&#128202; Daily Overview Chart</div><canvas id="hOverviewCanvas" height="120"></canvas></div>
     </div>
+  </section>
+
+</div>
+
+  <!-- ===== COURSES TAB ===== -->
+  <section id="tab-courses" class="tab-panel">
+    <div id="coursesContent"></div>
   </section>
 
 </div>
@@ -206,14 +234,15 @@
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
-<script src="js/Assignment.js?v=14"></script>
-<script src="js/Habit.js?v=14"></script>
-<script src="js/Auth.js?v=14"></script>
-<script src="js/Store.js?v=14"></script>
-<script src="js/AssignmentManager.js?v=14"></script>
-<script src="js/HabitManager.js?v=14"></script>
-<script src="js/AssignmentUI.js?v=14"></script>
-<script src="js/HabitUI.js?v=14"></script>
-<script src="js/App.js?v=14"></script>
+<script src="js/Assignment.js?v=15"></script>
+<script src="js/Habit.js?v=15"></script>
+<script src="js/Auth.js?v=15"></script>
+<script src="js/Store.js?v=15"></script>
+<script src="js/CourseManager.js?v=15"></script>
+<script src="js/AssignmentManager.js?v=15"></script>
+<script src="js/HabitManager.js?v=15"></script>
+<script src="js/AssignmentUI.js?v=15"></script>
+<script src="js/HabitUI.js?v=15"></script>
+<script src="js/App.js?v=15"></script>
 </body>
 </html>

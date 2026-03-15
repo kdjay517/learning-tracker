@@ -1,8 +1,3 @@
-// ============================================================
-// Store.js — Firestore persistence, per-user data paths
-// Each user's data is stored under users/{uid}/tracker/
-// ============================================================
-
 class Store {
   static db = null;
 
@@ -12,10 +7,10 @@ class Store {
     window.addEventListener('offline', () => { Store._online = false; Store._showToast('You are offline — changes saved locally', 'warn'); });
   }
 
-  static _userPath(collection) {
+  static _userPath(col) {
     const uid = Auth.uid;
     if (!uid) throw new Error('Not authenticated');
-    return 'users/' + uid + '/tracker/' + collection;
+    return 'users/' + uid + '/tracker/' + col;
   }
 
   static _showToast(msg, type) {
@@ -27,57 +22,59 @@ class Store {
     Store._toastTimer = setTimeout(() => { t.classList.remove('toast-show'); }, 3500);
   }
 
+  static async _set(col, data) {
+    const { doc, setDoc } = window.FirestoreAPI;
+    await setDoc(doc(Store.db, Store._userPath(col)), { data: JSON.stringify(data) });
+  }
+
+  static async _get(col) {
+    const { doc, getDoc } = window.FirestoreAPI;
+    const snap = await getDoc(doc(Store.db, Store._userPath(col)));
+    return snap.exists() ? JSON.parse(snap.data().data) : null;
+  }
+
   static async saveAssignments(assignments) {
     if (!Store.db || !Auth.uid) return;
-    try {
-      const { doc, setDoc } = window.FirestoreAPI;
-      await setDoc(doc(Store.db, Store._userPath('assignments')), {
-        data: JSON.stringify(assignments.map(a => a.toJSON()))
-      });
-    } catch (e) {
-      console.warn('saveAssignments:', e.message);
-      Store._showToast('Offline — will sync when reconnected', 'warn');
-    }
+    try { await Store._set('assignments', assignments.map(a => a.toJSON())); }
+    catch(e) { console.warn('saveAssignments:', e.message); Store._showToast('Offline — will sync when reconnected', 'warn'); }
   }
 
   static async loadAssignments() {
     if (!Store.db || !Auth.uid) return Store._defaultAssignments();
     try {
-      const { doc, getDoc } = window.FirestoreAPI;
-      const snap = await getDoc(doc(Store.db, Store._userPath('assignments')));
-      if (!snap.exists()) return Store._defaultAssignments();
-      const parsed = JSON.parse(snap.data().data).map(Assignment.fromJSON);
+      const data = await Store._get('assignments');
+      if (!data) return Store._defaultAssignments();
+      const parsed = data.map(Assignment.fromJSON);
       return parsed.length ? parsed : Store._defaultAssignments();
-    } catch (e) {
-      console.warn('loadAssignments:', e.message);
-      return Store._defaultAssignments();
-    }
+    } catch(e) { return Store._defaultAssignments(); }
   }
 
   static async saveHabits(habits) {
     if (!Store.db || !Auth.uid) return;
-    try {
-      const { doc, setDoc } = window.FirestoreAPI;
-      await setDoc(doc(Store.db, Store._userPath('habits')), {
-        data: JSON.stringify(habits.map(h => h.toJSON()))
-      });
-    } catch (e) {
-      console.warn('saveHabits:', e.message);
-    }
+    try { await Store._set('habits', habits.map(h => h.toJSON())); }
+    catch(e) { console.warn('saveHabits:', e.message); }
   }
 
   static async loadHabits() {
     if (!Store.db || !Auth.uid) return Store._defaultHabits();
     try {
-      const { doc, getDoc } = window.FirestoreAPI;
-      const snap = await getDoc(doc(Store.db, Store._userPath('habits')));
-      if (!snap.exists()) return Store._defaultHabits();
-      const parsed = JSON.parse(snap.data().data).map(Habit.fromJSON);
+      const data = await Store._get('habits');
+      if (!data) return Store._defaultHabits();
+      const parsed = data.map(Habit.fromJSON);
       return parsed.length ? parsed : Store._defaultHabits();
-    } catch (e) {
-      console.warn('loadHabits:', e.message);
-      return Store._defaultHabits();
-    }
+    } catch(e) { return Store._defaultHabits(); }
+  }
+
+  static async saveCourses(courses) {
+    if (!Store.db || !Auth.uid) return;
+    try { await Store._set('courses', courses); }
+    catch(e) { console.warn('saveCourses:', e.message); }
+  }
+
+  static async loadCourses() {
+    if (!Store.db || !Auth.uid) return [];
+    try { return (await Store._get('courses')) || []; }
+    catch(e) { return []; }
   }
 
   static _defaultAssignments() {

@@ -1,6 +1,7 @@
 class AssignmentUI {
-  constructor(manager) {
+  constructor(manager, courseManager) {
     this.manager = manager;
+    this.courseManager = courseManager || null;
     this._activeDropdown = null;
     this._archiveMode = false;
     this._searchQuery = '';
@@ -27,6 +28,10 @@ class AssignmentUI {
       if (btn) btn.innerHTML = this._archiveMode ? '&#128194; Hide Completed' : '&#128194; Show All';
       this._renderTable();
     });
+    safe('aBulkComplete', 'click', () => app.bulkComplete());
+    safe('aBulkDelete',   'click', () => app.bulkDelete());
+    safe('aExportCSV',    'click', () => app.exportCSV());
+    safe('aExportPDF',    'click', () => app.exportPDF());
     const ov = document.getElementById('aModalOverlay');
     if (ov) ov.addEventListener('click', (e) => { if (e.target === e.currentTarget) this.closeModal(); });
 
@@ -274,8 +279,8 @@ class AssignmentUI {
       const notesSafe = (a.notes||'').replace(/"/g,'&quot;').replace(/\n/g,' ');
 
       return '<tr class="anim-row'+(a.status==='Completed'?' row-completed':'')+'" style="animation-delay:'+(i*0.04)+'s" data-id="'+a.id+'">'
-        +'<td><span class="row-num">'+(i+1)+'</span></td>'
-        +'<td>'+this._courseCell(a.id, a.courseName)+'</td>'
+        +'<td><input type="checkbox" class="row-check"'+(isSelected?' checked':'')+' onchange="app.assignmentUI.toggleSelect('+a.id+', this)" /></td>'
+        +'<td><div class="course-dot-wrap"><span class="course-color-dot" style="background:'+courseColor+'"></span>'+this._courseCell(a.id, a.courseName)+'</div></td>'
         +'<td><input class="inline-input title-input" type="text" value="'+a.title.replace(/"/g,'&quot;')+'" placeholder="Title..." onblur="app.assignmentUI.saveField('+a.id+',\'title\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
         +'<td><input class="inline-input inline-date" type="date" value="'+(a.assignedDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" /></td>'
         +'<td><input class="inline-input inline-date" type="date" value="'+(a.dueDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" /></td>'
@@ -436,6 +441,26 @@ class AssignmentUI {
     } else {
       this._renderStats();
     }
+  }
+
+  toggleSelect(id, cb) {
+    this.manager.toggleSelect(id);
+    this._updateBulkBar();
+  }
+
+  toggleSelectAll(cb) {
+    const items = this._getFilteredItems();
+    if (cb.checked) this.manager.selectAll(items.map(a=>a.id));
+    else this.manager.clearSelection();
+    this._renderTable();
+  }
+
+  _updateBulkBar() {
+    const count = this.manager.selectedIds.size;
+    const bar = document.getElementById('aBulkBar');
+    const label = document.getElementById('aBulkCount');
+    if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+    if (label) label.textContent = count + ' selected';
   }
 
   saveField(id, field, value) {
