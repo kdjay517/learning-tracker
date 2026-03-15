@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learning Tracker</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+<div class="app-wrap">
+
+  <!-- ===== HEADER ===== -->
+  <header class="app-header">
+    <div class="app-logo">
+      <div class="logo-icon">🎓</div>
+      <div>
+        <div class="app-title">Learning Tracker</div>
+        <div class="app-sub">Track assignments &amp; habits</div>
+      </div>
+    </div>
+    <nav class="tabs">
+      <button class="tab-btn active" data-tab="assignments">📋 Assignments</button>
+      <button class="tab-btn" data-tab="habits">✅ Habit Tracker</button>
+    </nav>
+  </header>
+
+  <!-- ===== ASSIGNMENTS TAB ===== -->
+  <section id="tab-assignments" class="tab-panel">
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-card pink">
+        <div class="stat-label">Total</div>
+        <div class="stat-value" id="aStatTotal">0</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="aStatCompleted">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">In Progress</div>
+        <div class="stat-value" id="aStatProgress">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value" id="aStatPending">0</div>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span class="progress-label">Overall Completion</span>
+        <span class="progress-pct" id="aProgressPct">0%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="aProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Info cards -->
+    <div class="cards-row">
+      <div class="info-card">
+        <div class="info-card-title">Priority Breakdown</div>
+        <div class="priority-grid">
+          <div class="priority-item high">
+            <div class="p-count" id="aPriorityHigh">0</div>
+            <div class="p-label">High</div>
+          </div>
+          <div class="priority-item medium">
+            <div class="p-count" id="aPriorityMedium">0</div>
+            <div class="p-label">Medium</div>
+          </div>
+          <div class="priority-item low">
+            <div class="p-count" id="aPriorityLow">0</div>
+            <div class="p-label">Low</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">Courses</div>
+        <div class="course-list" id="aCourseList"></div>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <select id="aFilterStatus">
+        <option value="All">All Status</option>
+        <option value="Completed">Completed</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Pending">Pending</option>
+      </select>
+      <select id="aFilterPriority">
+        <option value="All">All Priority</option>
+        <option value="High">High</option>
+        <option value="Medium">Medium</option>
+        <option value="Low">Low</option>
+      </select>
+      <select id="aSortKey">
+        <option value="dueDate">Sort: Due Date</option>
+        <option value="priority">Sort: Priority</option>
+        <option value="status">Sort: Status</option>
+      </select>
+      <div class="toolbar-spacer"></div>
+      <button class="btn-primary" id="aAddBtn">+ Add Assignment</button>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Course</th>
+              <th>Assignment Title</th>
+              <th>Assigned</th>
+              <th>Due Date</th>
+              <th>Days Left</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Progress</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="aTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ===== HABITS TAB ===== -->
+  <section id="tab-habits" class="tab-panel">
+
+    <!-- Stats row -->
+    <div class="stat-row" style="grid-template-columns: repeat(3,1fr); max-width: 600px;">
+      <div class="stat-card green">
+        <div class="stat-label">Completed</div>
+        <div class="stat-value" id="hStatCompleted">0</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-label">Left</div>
+        <div class="stat-value" id="hStatLeft">0</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-label">Progress</div>
+        <div class="stat-value" id="hProgressPct" style="font-size:24px;">0%</div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-wrap" style="max-width:600px;">
+      <div class="progress-top">
+        <span class="progress-label">Monthly Progress</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="hProgressBar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="habit-controls">
+      <div class="month-nav">
+        <button class="nav-btn" id="hPrevMonth">‹</button>
+        <span id="hMonthLabel">January 2026</span>
+        <button class="nav-btn" id="hNextMonth">›</button>
+      </div>
+      <div class="add-habit-wrap">
+        <input type="text" id="hNewHabitInput" placeholder="Add new habit…" />
+        <button class="btn-primary" id="hAddHabitBtn">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="habit-grid-wrap">
+      <div class="hgrid" id="hGrid"></div>
+    </div>
+
+    <!-- Bottom panels -->
+    <div class="habit-bottom">
+      <div class="h-panel">
+        <div class="h-panel-title">🏆 Top Habits This Month</div>
+        <div id="hTopHabits"></div>
+      </div>
+      <div class="h-panel">
+        <div class="h-panel-title">📊 Daily Overview Chart</div>
+        <canvas id="hOverviewCanvas" height="120"></canvas>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- ===== ADD / EDIT MODAL ===== -->
+<div class="modal-overlay" id="aModalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="aModalTitle">Add Assignment</span>
+      <button class="modal-close-btn" id="aModalClose">✕</button>
+    </div>
+    <form id="aModalForm">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Course Name</label>
+          <input type="text" name="aCourseName" placeholder="e.g. Mathematics, Physics…" />
+        </div>
+        <div class="form-group full">
+          <label>Assignment Title *</label>
+          <input type="text" name="aTitle" placeholder="e.g. Algebra Worksheet" required />
+        </div>
+        <div class="form-group">
+          <label>Assigned Date</label>
+          <input type="date" name="aAssignedDate" />
+        </div>
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" name="aDueDate" />
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="aStatus">
+            <option>Pending</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select name="aPriority">
+            <option>High</option>
+            <option>Medium</option>
+            <option>Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Progress (%)</label>
+          <input type="number" name="aProgress" min="0" max="100" placeholder="0" />
+        </div>
+        <div class="form-group">
+          <label>Submission Type</label>
+          <select name="aSubmission">
+            <option>Physical Submission</option>
+            <option>Google Form</option>
+            <option>Email Submission</option>
+            <option>Online Upload</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Completed Date</label>
+          <input type="date" name="aCompletedDate" />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" id="aModalCancelBtn" onclick="app.assignmentUI.closeModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JS: Models → Stores → Managers → UIs → App (load order matters) -->
+<script src="js/Assignment.js"></script>
+<script src="js/Habit.js"></script>
+<script src="js/Store.js"></script>
+<script src="js/AssignmentManager.js"></script>
+<script src="js/HabitManager.js"></script>
+<script src="js/AssignmentUI.js"></script>
+<script src="js/HabitUI.js"></script>
+<script src="js/App.js"></script>
+</body>
+</html>
