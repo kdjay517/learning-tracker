@@ -18,6 +18,9 @@ class AssignmentManager {
   update(id, data) {
     const idx = this.assignments.findIndex(a => a.id === id);
     if (idx === -1) return;
+    // Auto-set progress when status changes
+    if (data.status === 'Completed' && data.progress === undefined) data.progress = 100;
+    if (data.status === 'Pending'   && data.progress === undefined) data.progress = 0;
     Object.assign(this.assignments[idx], data);
     this._persist();
   }

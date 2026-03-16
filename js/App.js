@@ -253,22 +253,25 @@ class App {
     // Switch to assignments tab and render
     this._showTab('assignments');
 
-    // 4. After render, scroll to the row and flash-highlight it
-    setTimeout(() => {
-      const row = document.querySelector('tr[data-id="'+id+'"]');
+    // Wait for render to complete then scroll + highlight
+    const tryHighlight = (attempts) => {
+      const row  = document.querySelector('tr[data-id="'+id+'"]');
+      const card = document.querySelector('.mobile-card[data-id="'+id+'"]');
+
       if (row) {
         row.scrollIntoView({ behavior: 'smooth', block: 'center' });
         row.classList.add('row-highlight');
-        setTimeout(() => row.classList.remove('row-highlight'), 2000);
-      }
-      // Also scroll mobile card into view
-      const card = document.querySelector('.mobile-card[data-id="'+id+'"]');
-      if (card) {
+        setTimeout(() => row.classList.remove('row-highlight'), 2500);
+      } else if (card) {
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         card.classList.add('row-highlight');
-        setTimeout(() => card.classList.remove('row-highlight'), 2000);
+        setTimeout(() => card.classList.remove('row-highlight'), 2500);
+      } else if (attempts > 0) {
+        // Row not found yet — retry after a short delay
+        setTimeout(() => tryHighlight(attempts - 1), 100);
       }
-    }, 150);
+    };
+    setTimeout(() => tryHighlight(10), 200);
   }
 
   _calcHabitStreak(habit) {
