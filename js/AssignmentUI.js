@@ -3,7 +3,7 @@ class AssignmentUI {
     this.manager = manager;
     this.courseManager = courseManager || null;
     this._activeDropdown = null;
-    this._archiveMode = false;
+    this._archiveMode = true;
     this._searchQuery = '';
     this._bindControls();
     document.addEventListener('click', (e) => {
@@ -279,7 +279,7 @@ class AssignmentUI {
         : (!this._archiveMode
             ? '<div class="empty-state"><div class="empty-icon">&#127881;</div><div class="empty-title">All caught up!</div><div class="empty-sub">No active assignments. Click "Show All" to see completed ones.</div></div>'
             : '<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No assignments yet</div><div class="empty-sub">Click "+ Add Assignment" to get started</div></div>');
-      tbody.innerHTML = '<tr><td colspan="12">' + msg + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11">' + msg + '</td></tr>';
       this._renderMobileCards(items);
       this._renderStats();
       return;
@@ -295,12 +295,15 @@ class AssignmentUI {
       }
       const statusCls   = 'status-'   + a.status.replace(' ','-').toLowerCase();
       const priorityCls = 'priority-' + a.priority.toLowerCase();
+      const courseColor = this.courseManager ? this.courseManager.getColor(a.courseName) : '#6c63ff';
+      const urgencyCls  = a.status !== 'Completed' && a.daysLeft !== null
+        ? (a.daysLeft < 0 ? ' row-overdue' : a.daysLeft <= 3 ? ' row-urgent' : '') : '';
+      const isSelected  = this.manager.selectedIds && this.manager.selectedIds.has(a.id);
       const progBtns = [25,50,75,100].map(p =>
         '<button class="prog-btn'+(a.progress===p?' prog-active':'')+'" onclick="app.assignmentUI.saveField('+a.id+',\'progress\','+p+')">'+p+'%</button>'
       ).join('');
-      const notesSafe = (a.notes||'').replace(/"/g,'&quot;').replace(/\n/g,' ');
 
-      return '<tr class="anim-row'+(a.status==='Completed'?' row-completed':'')+'" style="animation-delay:'+(i*0.04)+'s" data-id="'+a.id+'">'
+      return '<tr class="anim-row'+(a.status==='Completed'?' row-completed':'')+urgencyCls+'" style="animation-delay:'+(i*0.04)+'s" data-id="'+a.id+'">'
         +'<td><input type="checkbox" class="row-check"'+(isSelected?' checked':'')+' onchange="app.assignmentUI.toggleSelect('+a.id+', this)" /></td>'
         +'<td><div class="course-dot-wrap"><span class="course-color-dot" style="background:'+courseColor+'"></span>'+this._courseCell(a.id, a.courseName)+'</div></td>'
         +'<td><input class="inline-input title-input" type="text" value="'+a.title.replace(/"/g,'&quot;')+'" placeholder="Title..." onblur="app.assignmentUI.saveField('+a.id+',\'title\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
@@ -319,7 +322,7 @@ class AssignmentUI {
           +'<option'+(a.priority==='Low'?' selected':'')+'>Low</option>'
           +'</select></td>'
         +'<td><div class="progress-cell"><div class="mini-bar"><div class="mini-fill" style="width:'+a.progress+'%"></div></div><span>'+a.progress+'%</span><div class="prog-btns">'+progBtns+'</div></div></td>'
-        +'<td><input class="inline-input notes-input" type="text" value="'+notesSafe+'" placeholder="Notes..." onblur="app.assignmentUI.saveField('+a.id+',\'notes\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" title="'+(a.notes||'')+'" /></td>'
+
         +'<td><div class="action-btns"><button class="btn-icon del-btn" onclick="app.deleteAssignment('+a.id+')" title="Delete">&#128465;&#65039;</button></div></td>'
         +'</tr>';
     }).join('');
