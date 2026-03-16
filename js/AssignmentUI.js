@@ -136,9 +136,31 @@ class AssignmentUI {
 
   _getFilteredItems() {
     let items = this.manager.getFiltered();
+    // Archive filter
     if (!this._archiveMode) items = items.filter(a => a.status !== 'Completed');
-    if (this._searchQuery) items = items.filter(a => (a.title||'').toLowerCase().includes(this._searchQuery) || (a.courseName||'').toLowerCase().includes(this._searchQuery));
+    // Course filter (from course tab click)
+    if (this._courseFilter) items = items.filter(a => a.courseName === this._courseFilter);
+    // Search filter
+    if (this._searchQuery) items = items.filter(a =>
+      (a.title||'').toLowerCase().includes(this._searchQuery) ||
+      (a.courseName||'').toLowerCase().includes(this._searchQuery)
+    );
     return items;
+  }
+
+  filterByCourse(courseName) {
+    this._courseFilter = courseName || null;
+    this._searchQuery  = '';
+    const searchEl = document.getElementById('aSearch');
+    if (searchEl) searchEl.value = '';
+    // Update course filter badge
+    const badge = document.getElementById('aCourseFilterBadge');
+    if (badge) {
+      badge.style.display = courseName ? 'flex' : 'none';
+      badge.querySelector('.cf-name') && (badge.querySelector('.cf-name').textContent = courseName);
+    }
+    this._renderTable();
+    this._renderStats();
   }
 
   _renderStats() {

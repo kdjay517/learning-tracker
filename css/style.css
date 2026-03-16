@@ -1739,3 +1739,40 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   .dash-cards { grid-template-columns: 1fr 1fr; }
   .stat-value { font-size: 20px; }
 }
+
+/* ===== COURSE FILTER BADGE ===== */
+.course-filter-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(108,99,255,0.1);
+  border: 1px solid rgba(108,99,255,0.35);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 13px;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.course-filter-badge button {
+  background: transparent;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  margin-left: auto;
+  transition: color 0.15s;
+}
+.course-filter-badge button:hover { color: var(--high); }
+
+/* ===== CLICKABLE COURSE CARD ===== */
+.course-mgmt-card { cursor: pointer; }
+.course-mgmt-card:hover { border-color: var(--accent); background: rgba(108,99,255,0.04); }
+.course-mgmt-count-link {
+  color: var(--accent);
+  font-size: 11px;
+  margin-top: 2px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}

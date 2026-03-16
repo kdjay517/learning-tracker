@@ -107,10 +107,16 @@
         <option value="dueDate">Sort: Due Date</option><option value="priority">Sort: Priority</option><option value="status">Sort: Status</option>
         <option value="course">Sort: Course</option>
       </select>
-      <button class="btn-archive" id="aArchiveToggle">&#128194; Show All</button>
+      <button class="btn-archive" id="aArchiveToggle">&#128194; Hide Completed</button>
       <div class="toolbar-spacer"></div>
       <button class="btn-primary" id="aAddBtn">+ Add Assignment</button>
     </div>
+    <!-- Course filter badge -->
+    <div class="course-filter-badge" id="aCourseFilterBadge" style="display:none;">
+      <span>&#127775; Filtering by: <strong class="cf-name"></strong></span>
+      <button onclick="app.assignmentUI.filterByCourse(null)" title="Clear filter">&#10005;</button>
+    </div>
+
     <!-- Bulk action bar -->
     <div class="bulk-bar" id="aBulkBar" style="display:none;">
       <span class="bulk-count" id="aBulkCount">0 selected</span>
@@ -238,15 +244,15 @@
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
-<script src="js/Assignment.js?v=19"></script>
-<script src="js/Habit.js?v=19"></script>
-<script src="js/Auth.js?v=19"></script>
-<script src="js/Store.js?v=19"></script>
-<script src="js/CourseManager.js?v=19"></script>
-<script src="js/AssignmentManager.js?v=19"></script>
-<script src="js/HabitManager.js?v=19"></script>
-<script src="js/AssignmentUI.js?v=19"></script>
-<script src="js/HabitUI.js?v=19"></script>
-<script src="js/App.js?v=19"></script>
+<script src="js/Assignment.js?v=20"></script>
+<script src="js/Habit.js?v=20"></script>
+<script src="js/Auth.js?v=20"></script>
+<script src="js/Store.js?v=20"></script>
+<script src="js/CourseManager.js?v=20"></script>
+<script src="js/AssignmentManager.js?v=20"></script>
+<script src="js/HabitManager.js?v=20"></script>
+<script src="js/AssignmentUI.js?v=20"></script>
+<script src="js/HabitUI.js?v=20"></script>
+<script src="js/App.js?v=20"></script>
 </body>
 </html>

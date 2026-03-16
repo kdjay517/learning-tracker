@@ -233,23 +233,24 @@ class App {
   }
 
   goToAssignment(id) {
-    // 1. Show all assignments (including completed) so row is visible
-    this.assignmentUI._archiveMode = true;
-    const archiveBtn = document.getElementById('aArchiveToggle');
+    // Clear all filters so the row is visible
+    this.assignmentUI._archiveMode  = true;
+    this.assignmentUI._searchQuery  = '';
+    this.assignmentUI._courseFilter = null;
+    const archiveBtn  = document.getElementById('aArchiveToggle');
+    const searchEl    = document.getElementById('aSearch');
+    const statusEl    = document.getElementById('aFilterStatus');
+    const priorityEl  = document.getElementById('aFilterPriority');
+    const cfBadge     = document.getElementById('aCourseFilterBadge');
     if (archiveBtn) archiveBtn.innerHTML = '&#128194; Hide Completed';
-
-    // 2. Clear any active search/filter so the row isn't hidden
-    this.assignmentUI._searchQuery = '';
-    const searchEl = document.getElementById('aSearch');
-    if (searchEl) searchEl.value = '';
+    if (searchEl)   searchEl.value = '';
+    if (statusEl)   statusEl.value = 'All';
+    if (priorityEl) priorityEl.value = 'All';
+    if (cfBadge)    cfBadge.style.display = 'none';
     this.assignmentManager.filterStatus   = 'All';
     this.assignmentManager.filterPriority = 'All';
-    const statusEl   = document.getElementById('aFilterStatus');
-    const priorityEl = document.getElementById('aFilterPriority');
-    if (statusEl)   statusEl.value   = 'All';
-    if (priorityEl) priorityEl.value = 'All';
 
-    // 3. Switch to assignments tab and render
+    // Switch to assignments tab and render
     this._showTab('assignments');
 
     // 4. After render, scroll to the row and flash-highlight it
@@ -307,12 +308,12 @@ class App {
     }
     grid.innerHTML = all.map(c => {
       const count = counts[c.name] || 0;
-      return '<div class="course-mgmt-card">'
+      return '<div class="course-mgmt-card" onclick="app.filterByCourse(\''+c.name.replace(/'/g,"\\'")+'\')">'
         + '<div class="course-mgmt-left">'
         + '<input type="color" value="'+c.color+'" class="course-color-picker" onchange="app.updateCourseColor(\''+c.name.replace(/'/g,"\\'")+'\', this.value)" />'
         + '<div class="course-mgmt-info">'
         + '<div class="course-mgmt-name" contenteditable="true" onblur="app.renameCourse(\''+c.name.replace(/'/g,"\\'")+'\', this.textContent.trim())">'+c.name+'</div>'
-        + '<div class="course-mgmt-count">'+count+' assignment'+(count!==1?'s':'')+'</div>'
+        + '<div class="course-mgmt-count course-mgmt-count-link" onclick="event.stopPropagation();app.filterByCourse(\''+c.name.replace(/'/g,"\\'")+'\')">'+count+' assignment'+(count!==1?'s':'')+' — view &#8594;</div>'
         + '</div></div>'
         + '<button class="btn-icon del-btn" onclick="app.deleteCourse(\''+c.name.replace(/'/g,"\\'")+'\')">&#128465;&#65039;</button>'
         + '</div>';
@@ -343,10 +344,26 @@ class App {
     this._renderCourses();
   }
 
+  filterByCourse(courseName) {
+    // Switch to assignments tab and filter by this course
+    this._showTab('assignments');
+    setTimeout(() => {
+      if (this.assignmentUI) this.assignmentUI.filterByCourse(courseName);
+    }, 100);
+  }
+
   deleteCourse(name) {
     if (!confirm('Delete course "'+name+'"? Assignments with this course will keep the name.')) return;
     this.courseManager.delete(name);
+    // Clear course filter if we were filtering by this course
+    if (this.assignmentUI && this.assignmentUI._courseFilter === name) {
+      this.assignmentUI._courseFilter = null;
+      const cfBadge = document.getElementById('aCourseFilterBadge');
+      if (cfBadge) cfBadge.style.display = 'none';
+    }
     this._renderCourses();
+    // Refresh assignment stats so counts update
+    if (this.assignmentUI) this.assignmentUI._renderStats();
   }
 
   // ── Bulk actions (called from AssignmentUI) ──
