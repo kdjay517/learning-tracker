@@ -324,13 +324,13 @@ class App {
         '<div class="course-row-box course-row-dur">',
           '<div class="course-row-label">&#9201; Duration (mins)</div>',
           '<input type="number" min="0" placeholder="e.g. 90" value="' + durTotalMins + '"',
-            ' class="course-dur-field" onchange="app.updateCourseDuration(' + n + ',this.value)" />',
+            ' class="course-dur-field" onchange="app.updateCourseDuration(' + n + ',this.value)" onblur="app.updateCourseDuration(' + n + ',this.value)" />',
           durLabel ? '<div class="course-dur-hint">' + durLabel + '</div>' : '',
         '</div>',
 
         '<div class="course-row-box course-row-status">',
           '<div class="course-row-label">&#9989; Status</div>',
-          '<select class="' + compCls + '" onchange="app.updateCourseCompletion(' + n + ',this.value)">',
+          '<select class="' + compCls + '" onchange="app.updateCourseCompletion(' + n + ',this.value);this.className=\'course-status-select course-status-\'+this.value.replace(/ /g,\'-\').toLowerCase()">',
             statusOpts,
           '</select>',
         '</div>',
@@ -384,6 +384,28 @@ class App {
 
   updateCourseDuration(name, totalMins) {
     this.courseManager.updateDuration(name, totalMins);
+    // Update the hint label live without re-rendering
+    const cards = document.querySelectorAll('.course-row-card');
+    cards.forEach(card => {
+      const nameEl = card.querySelector('.course-row-name');
+      if (nameEl && nameEl.textContent.trim() === name) {
+        const hint = card.querySelector('.course-dur-hint');
+        const mins = parseInt(totalMins) || 0;
+        const h = Math.floor(mins / 60), m = mins % 60;
+        const label = mins ? (h && m ? h+'h '+m+'m' : h ? h+'h' : m+'m') : '';
+        if (hint) {
+          hint.textContent = label;
+        } else if (label) {
+          const inp = card.querySelector('.course-dur-field');
+          if (inp && inp.parentElement) {
+            const d = document.createElement('div');
+            d.className = 'course-dur-hint';
+            d.textContent = label;
+            inp.parentElement.appendChild(d);
+          }
+        }
+      }
+    });
   }
 
   updateCourseCompletion(name, status) {

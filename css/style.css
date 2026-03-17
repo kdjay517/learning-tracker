@@ -1926,7 +1926,7 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
 }
 
 /* Box 1 — info */
-.course-row-info { flex: 2; min-width: 160px; }
+.course-row-info { flex: 1.2; min-width: 140px; }
 .course-row-name-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .course-color-dot-btn {
   width: 24px; height: 24px;
@@ -1957,7 +1957,7 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
 .course-row-count:hover { color: var(--accent2); }
 
 /* Box 2 — duration */
-.course-row-dur { flex: 1; min-width: 120px; }
+.course-row-dur { flex: 0.7; min-width: 100px; }
 .course-row-label {
   font-size: 9px;
   text-transform: uppercase;
@@ -1989,7 +1989,7 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
 }
 
 /* Box 3 — status select */
-.course-row-status { flex: 1; min-width: 140px; }
+.course-row-status { flex: 0.8; min-width: 120px; }
 .course-status-select {
   width: 100%;
   background: transparent;
