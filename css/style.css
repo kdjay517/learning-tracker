@@ -1902,3 +1902,128 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   border-color: rgba(34,197,94,0.4);
   color: var(--lo);
 }
+
+/* ===== COURSE ROW CARD (horizontal layout) ===== */
+.courses-grid { display: flex; flex-direction: column; gap: 10px; }
+
+.course-row-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color 0.15s;
+}
+.course-row-card:hover { border-color: var(--accent); }
+
+.course-row-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+}
+
+/* Box 1 — info */
+.course-row-info { flex: 2; min-width: 160px; }
+.course-row-name-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.course-color-dot-btn {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  cursor: pointer;
+  padding: 0;
+  background: none;
+  flex-shrink: 0;
+}
+.course-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+  border-bottom: 1px dashed transparent;
+  transition: border-color 0.15s;
+  flex: 1;
+}
+.course-row-name:focus { border-color: var(--accent); }
+.course-row-count {
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.course-row-count:hover { color: var(--accent2); }
+
+/* Box 2 — duration */
+.course-row-dur { flex: 1; min-width: 120px; }
+.course-row-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.course-dur-field {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+  text-align: center;
+}
+.course-dur-field:focus { border-color: var(--accent); }
+.course-dur-hint {
+  font-size: 10px;
+  color: var(--accent3);
+  text-align: center;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+/* Box 3 — status select */
+.course-row-status { flex: 1; min-width: 140px; }
+.course-status-select {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  text-align: center;
+  transition: all 0.15s;
+  color: var(--text2);
+}
+.course-status-select option { background: var(--surface2); color: var(--text); }
+.course-status-select.course-status-not-started {
+  background: rgba(245,166,35,0.12); color: var(--accent4); border-color: rgba(245,166,35,0.3);
+}
+.course-status-select.course-status-in-progress {
+  background: rgba(108,99,255,0.12); color: var(--accent); border-color: rgba(108,99,255,0.3);
+}
+.course-status-select.course-status-completed {
+  background: rgba(34,197,94,0.12); color: var(--lo); border-color: rgba(34,197,94,0.3);
+}
+
+/* Delete button */
+.course-row-del { flex-shrink: 0; width: 36px; height: 36px; }
+
+/* Mobile */
+@media (max-width: 768px) {
+  .course-row-card { flex-wrap: wrap; gap: 8px; }
+  .course-row-info { flex: 1 1 100%; }
+  .course-row-dur  { flex: 1; }
+  .course-row-status { flex: 1; }
+}

@@ -319,34 +319,40 @@ class App {
       return;
     }
     grid.innerHTML = all.map(c => {
-      const count  = counts[c.name] || 0;
+      const count        = counts[c.name] || 0;
       const durTotalMins = c.durationMins || 0;
-      const durLabel = app.courseManager.getDurationLabel(c.name);
-      const comp   = c.completion || 'Not Started';
-      const sn     = c.name.replace(/'/g, "\\'");
-      return '<div class="course-mgmt-card">'
-        + '<div class="course-card-top">'
-        + '<input type="color" value="'+c.color+'" class="course-color-picker" onclick="event.stopPropagation()" onchange="app.updateCourseColor(\''+sn+'\',this.value)" />'
-        + '<div class="course-mgmt-info" style="flex:1">'
-        + '<div class="course-mgmt-name" contenteditable="true" onblur="app.renameCourse(\''+sn+'\',this.textContent.trim())">'+c.name+'</div>'
-        + '<div class="course-mgmt-count course-mgmt-count-link" onclick="app.filterByCourse(\''+sn+'\')">'+count+' assignment'+(count!==1?'s':'')+' — view &#8594;</div>'
+      const durLabel     = app.courseManager.getDurationLabel(c.name);
+      const comp         = c.completion || 'Not Started';
+      const sn           = c.name.replace(/'/g, "\\'");
+      return '<div class="course-row-card">'
+
+        // Box 1 — Course name + assignment details
+        + '<div class="course-row-box course-row-info">'
+        + '<div class="course-row-name-wrap">'
+        + '<input type="color" value="'+c.color+'" class="course-color-dot-btn" onclick="event.stopPropagation()" onchange="app.updateCourseColor(''+sn+'',this.value)" title="Change colour" />'
+        + '<div class="course-row-name" contenteditable="true" onblur="app.renameCourse(''+sn+'',this.textContent.trim())">'+c.name+'</div>'
         + '</div>'
-        + '<button class="btn-icon del-btn" onclick="app.deleteCourse(\''+sn+'\')">&#128465;&#65039;</button>'
+        + '<div class="course-row-count" onclick="app.filterByCourse(''+sn+'')">'+count+' assignment'+(count!==1?'s':'')+' &rarr;</div>'
         + '</div>'
-        + '<div class="course-card-fields">'
-        + '<div class="course-field-row">'
-        + '<span class="course-field-label">&#9201; Duration (minutes)</span>'
-        + '<div class="course-dur-inputs">'
-        + '<input type="number" min="0" placeholder="e.g. 90" value="'+durTotalMins+'" class="course-field-input" style="width:90px" onchange="app.updateCourseDuration(\''+sn+'\',this.value)" />'
-        + '<span class="course-dur-sep" style="font-size:11px;color:var(--text3)">'+durLabel+'</span>'
-        + '</div></div>'
-        + '<div class="course-field-row">'
-        + '<span class="course-field-label">&#9989; Completion Status</span>'
-        + '<div class="course-status-wrap">'
-        + this._courseStatusBtns(sn, comp)
+
+        // Box 2 — Duration
+        + '<div class="course-row-box course-row-dur">'
+        + '<div class="course-row-label">&#9201; Duration (mins)</div>'
+        + '<input type="number" min="0" placeholder="e.g. 90" value="'+durTotalMins+'" class="course-dur-field" onchange="app.updateCourseDuration(''+sn+'',this.value)" />'
+        + (durLabel ? '<div class="course-dur-hint">'+durLabel+'</div>' : '')
         + '</div>'
+
+        // Box 3 — Completion status dropdown
+        + '<div class="course-row-box course-row-status">'
+        + '<div class="course-row-label">&#9989; Status</div>'
+        + '<select class="course-status-select course-status-'+comp.replace(/ /g,'-').toLowerCase()+'" onchange="app.updateCourseCompletion(''+sn+'',this.value)">'
+        + ['Not Started','In Progress','Completed'].map(function(s){ return '<option value="'+s+'"'+(comp===s?' selected':'')+'>'+s+'</option>'; }).join('')
+        + '</select>'
         + '</div>'
-        + '</div>'
+
+        // Delete button
+        + '<button class="course-row-del btn-icon del-btn" onclick="app.deleteCourse(''+sn+'')" title="Delete">&#128465;&#65039;</button>'
+
         + '</div>';
     }).join('');
   }
@@ -370,7 +376,18 @@ class App {
 
   updateCourseCompletion(name, status) {
     this.courseManager.updateCompletion(name, status);
-    this._renderCourses();
+    // Update select colour class live without full re-render
+    const cards = document.querySelectorAll('.course-row-card');
+    cards.forEach(card => {
+      const nameEl = card.querySelector('.course-row-name');
+      if (nameEl && nameEl.textContent.trim() === name) {
+        const sel = card.querySelector('.course-status-select');
+        if (sel) {
+          sel.value = status;
+          sel.className = 'course-status-select course-status-' + status.replace(/ /g,'-').toLowerCase();
+        }
+      }
+    });
   }
 
   renameCourse(oldName, newName) {
