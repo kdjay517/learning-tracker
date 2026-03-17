@@ -311,9 +311,9 @@ class App {
     }
     grid.innerHTML = all.map(c => {
       const count  = counts[c.name] || 0;
-      const durH   = c.durationHours || '';
-      const durM   = c.durationMins  || '';
-      const comp   = c.completion    || 0;
+      const durTotalMins = c.durationMins || 0;
+      const durLabel = app.courseManager.getDurationLabel(c.name);
+      const comp   = c.completion || 'Not Started';
       const sn     = c.name.replace(/'/g, "\\'");
       return '<div class="course-mgmt-card">'
         + '<div class="course-card-top">'
@@ -326,20 +326,16 @@ class App {
         + '</div>'
         + '<div class="course-card-fields">'
         + '<div class="course-field-row">'
-        + '<span class="course-field-label">&#9201; Duration</span>'
+        + '<span class="course-field-label">&#9201; Duration (minutes)</span>'
         + '<div class="course-dur-inputs">'
-        + '<input type="number" min="0" max="999" placeholder="0" value="'+durH+'" class="course-field-input" onchange="app.updateCourseDuration(\''+sn+'\',this.value,this.closest(\'.course-dur-inputs\').querySelector(\'[data-m]\').value)" />'
-        + '<span class="course-dur-sep">h</span>'
-        + '<input type="number" min="0" max="59" placeholder="0" value="'+durM+'" class="course-field-input" data-m onchange="app.updateCourseDuration(\''+sn+'\',this.closest(\'.course-dur-inputs\').querySelector(\'input:first-child\').value,this.value)" />'
-        + '<span class="course-dur-sep">m</span>'
+        + '<input type="number" min="0" placeholder="e.g. 90" value="'+durTotalMins+'" class="course-field-input" style="width:90px" onchange="app.updateCourseDuration(\''+sn+'\',this.value)" />'
+        + '<span class="course-dur-sep" style="font-size:11px;color:var(--text3)">'+durLabel+'</span>'
         + '</div></div>'
         + '<div class="course-field-row">'
-        + '<span class="course-field-label">&#9989; Completion</span>'
-        + '<div class="course-comp-wrap">'
-        + '<input type="range" min="0" max="100" step="5" value="'+comp+'" class="course-comp-slider" oninput="this.nextElementSibling.textContent=this.value+\'%\';app.updateCourseCompletion(\''+sn+'\',this.value)" />'
-        + '<span class="course-comp-val">'+comp+'%</span>'
+        + '<span class="course-field-label">&#9989; Completion Status</span>'
+        + '<div class="course-status-wrap">'
+        + ['Not Started','In Progress','Completed'].map(function(s){return '<button class="course-status-btn course-status-'+s.replace(' ','-').toLowerCase()+(comp===s?' course-status-active':'')+\'\' onclick="app.updateCourseCompletion(\'\'+sn+\'\',\'\'+s+\'\')">\'+ s +\'</button>\';}).join('')
         + '</div>'
-        + '<div class="course-comp-bar"><div class="course-comp-fill" style="width:'+comp+'%;background:'+c.color+'"></div></div>'
         + '</div>'
         + '</div>'
         + '</div>';
@@ -359,12 +355,13 @@ class App {
     this.courseManager.updateColor(name, color);
   }
 
-  updateCourseDuration(name, hours, mins) {
-    this.courseManager.updateDuration(name, hours, mins);
+  updateCourseDuration(name, totalMins) {
+    this.courseManager.updateDuration(name, totalMins);
   }
 
-  updateCourseCompletion(name, pct) {
-    this.courseManager.updateCompletion(name, pct);
+  updateCourseCompletion(name, status) {
+    this.courseManager.updateCompletion(name, status);
+    this._renderCourses();
   }
 
   renameCourse(oldName, newName) {

@@ -535,8 +535,7 @@ class AssignmentUI {
       form.aStatus.value        = assignment.status;
       form.aPriority.value      = assignment.priority;
       form.aProgress.value      = assignment.progress;
-      if (form.aDurationH) form.aDurationH.value = assignment.durationHours || '';
-      if (form.aDurationM) form.aDurationM.value = assignment.durationMins  || '';
+      if (form.aDurationMins) form.aDurationMins.value = assignment.durationMins || 0;
       form.aSubmission.value    = assignment.submissionType;
       form.aCompletedDate.value = assignment.completedDate;
       form.aNotes.value         = assignment.notes || '';
@@ -564,8 +563,7 @@ class AssignmentUI {
       status:         form.aStatus.value,
       priority:       form.aPriority.value,
       progress:       parseInt(form.aProgress.value)||0,
-      durationHours:  form.aDurationH ? form.aDurationH.value : '',
-      durationMins:   form.aDurationM ? form.aDurationM.value : '',
+      durationMins:   form.aDurationMins ? (parseInt(form.aDurationMins.value)||0) : 0,
       submissionType: form.aSubmission.value,
       completedDate:  form.aCompletedDate.value,
       notes:          form.aNotes.value.trim(),

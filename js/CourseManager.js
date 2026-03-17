@@ -23,7 +23,7 @@ class CourseManager {
   add(name, color) {
     if (!name || this.courses.find(c => c.name === name)) return;
     const col = color || CourseManager.PALETTE[this.courses.length % CourseManager.PALETTE.length];
-    this.courses.push({ name: name.trim(), color: col, durationHours: '', durationMins: '', completion: 0 });
+    this.courses.push({ name: name.trim(), color: col, durationMins: 0, completion: 'Not Started' });
     this._deleted.delete(name.trim());
     this._persist();
   }
@@ -34,14 +34,24 @@ class CourseManager {
     else   { this.add(name, color); }
   }
 
-  updateDuration(name, hours, mins) {
+  updateDuration(name, totalMins) {
     const c = this.courses.find(c => c.name === name);
-    if (c) { c.durationHours = hours; c.durationMins = mins; this._persist(); }
+    if (c) { c.durationMins = parseInt(totalMins)||0; this._persist(); }
   }
 
-  updateCompletion(name, pct) {
+  getDurationLabel(name) {
     const c = this.courses.find(c => c.name === name);
-    if (c) { c.completion = Math.min(100, Math.max(0, parseInt(pct)||0)); this._persist(); }
+    const total = (c && c.durationMins) ? parseInt(c.durationMins)||0 : 0;
+    if (!total) return '';
+    const h = Math.floor(total/60), m = total%60;
+    if (h && m) return h+'h '+m+'m';
+    if (h) return h+'h';
+    return m+'m';
+  }
+
+  updateCompletion(name, status) {
+    const c = this.courses.find(c => c.name === name);
+    if (c) { c.completion = status; this._persist(); }
   }
 
   rename(oldName, newName) {

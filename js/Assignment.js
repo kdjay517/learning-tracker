@@ -4,7 +4,7 @@ class Assignment {
   static SUBMISSION = ['Physical Submission', 'Google Form', 'Email Submission', 'Online Upload'];
 
   constructor({ id, courseName, title, assignedDate, dueDate, status, priority, progress,
-                submissionType, completedDate, durationHours, durationMins, notes } = {}) {
+                submissionType, completedDate, durationMins, durationHours, notes } = {}) {
     this.id             = id || Date.now();
     this.courseName     = courseName     || '';
     this.title          = title          || '';
@@ -15,24 +15,32 @@ class Assignment {
     this.progress       = progress       || 0;
     this.submissionType = submissionType || Assignment.SUBMISSION[0];
     this.completedDate  = completedDate  || '';
-    this.durationHours  = durationHours  || '';
-    this.durationMins   = durationMins   || '';
     this.notes          = notes          || '';
+    // Migrate old durationHours to single durationMins field
+    // durationMins = total minutes (e.g. 90 = 1h 30m)
+    if (durationMins !== undefined && durationMins !== '') {
+      this.durationMins = parseInt(durationMins) || 0;
+    } else if (durationHours !== undefined && durationHours !== '') {
+      // Migrate old separate h field to total minutes
+      this.durationMins = Math.round((parseFloat(durationHours)||0) * 60);
+    } else {
+      this.durationMins = 0;
+    }
   }
 
-  // Returns formatted duration string e.g. "2h 30m", "45m", "3h"
+  // e.g. 90 → "1h 30m", 45 → "45m", 120 → "2h"
   get durationLabel() {
-    const h = parseInt(this.durationHours) || 0;
-    const m = parseInt(this.durationMins)  || 0;
-    if (!h && !m) return '';
-    if (h && m)   return h + 'h ' + m + 'm';
-    if (h)        return h + 'h';
+    const total = parseInt(this.durationMins) || 0;
+    if (!total) return '';
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    if (h && m) return h + 'h ' + m + 'm';
+    if (h)      return h + 'h';
     return m + 'm';
   }
 
-  // Total duration in minutes for calculations
   get durationTotalMins() {
-    return (parseInt(this.durationHours)||0)*60 + (parseInt(this.durationMins)||0);
+    return parseInt(this.durationMins) || 0;
   }
 
   get daysLeft() {
@@ -40,11 +48,6 @@ class Assignment {
     const today = new Date(); today.setHours(0,0,0,0);
     const due   = new Date(this.dueDate);
     return Math.ceil((due - today) / (1000 * 60 * 60 * 24));
-  }
-
-  get onTimeLate() {
-    if (!this.completedDate || !this.dueDate) return '—';
-    return new Date(this.completedDate) <= new Date(this.dueDate) ? 'On Time' : 'Late';
   }
 
   get priorityScore() {
@@ -57,7 +60,7 @@ class Assignment {
       assignedDate: this.assignedDate, dueDate: this.dueDate,
       status: this.status, priority: this.priority, progress: this.progress,
       submissionType: this.submissionType, completedDate: this.completedDate,
-      durationHours: this.durationHours, durationMins: this.durationMins, notes: this.notes
+      durationMins: this.durationMins, notes: this.notes
     };
   }
 
