@@ -294,6 +294,54 @@ class App {
     }).join('');
   }
 
+  _buildCourseCard(c, count) {
+    const durTotalMins = c.durationMins || 0;
+    const durLabel     = this.courseManager.getDurationLabel(c.name);
+    const comp         = c.completion || 'Not Started';
+    const compCls      = 'course-status-select course-status-' + comp.replace(/ /g, '-').toLowerCase();
+    const n            = JSON.stringify(c.name);  // safely quoted name for onclick
+
+    const statusOpts = ['Not Started','In Progress','Completed'].map(s =>
+      '<option value="' + s + '"' + (comp === s ? ' selected' : '') + '>' + s + '</option>'
+    ).join('');
+
+    return [
+      '<div class="course-row-card">',
+
+        '<div class="course-row-box course-row-info">',
+          '<div class="course-row-name-wrap">',
+            '<input type="color" value="' + c.color + '" class="course-color-dot-btn"',
+              ' onclick="event.stopPropagation()"',
+              ' onchange="app.updateCourseColor(' + n + ',this.value)" />',
+            '<div class="course-row-name" contenteditable="true"',
+              ' onblur="app.renameCourse(' + n + ',this.textContent.trim())">' + c.name + '</div>',
+          '</div>',
+          '<div class="course-row-count" onclick="app.filterByCourse(' + n + ')">',
+            count + ' assignment' + (count !== 1 ? 's' : '') + ' &rarr;',
+          '</div>',
+        '</div>',
+
+        '<div class="course-row-box course-row-dur">',
+          '<div class="course-row-label">&#9201; Duration (mins)</div>',
+          '<input type="number" min="0" placeholder="e.g. 90" value="' + durTotalMins + '"',
+            ' class="course-dur-field" onchange="app.updateCourseDuration(' + n + ',this.value)" />',
+          durLabel ? '<div class="course-dur-hint">' + durLabel + '</div>' : '',
+        '</div>',
+
+        '<div class="course-row-box course-row-status">',
+          '<div class="course-row-label">&#9989; Status</div>',
+          '<select class="' + compCls + '" onchange="app.updateCourseCompletion(' + n + ',this.value)">',
+            statusOpts,
+          '</select>',
+        '</div>',
+
+        '<button class="course-row-del btn-icon del-btn"',
+          ' onclick="app.deleteCourse(' + n + ')" title="Delete">&#128465;&#65039;</button>',
+
+      '</div>'
+    ].join('');
+  }
+
   _renderCourses() {
     const el = document.getElementById('coursesContent');
     if (!el) return;
@@ -318,43 +366,7 @@ class App {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">&#128218;</div><div class="empty-title">No courses yet</div><div class="empty-sub">Add a course above or type a course name when adding assignments</div></div>';
       return;
     }
-    grid.innerHTML = all.map(c => {
-      const count        = counts[c.name] || 0;
-      const durTotalMins = c.durationMins || 0;
-      const durLabel     = app.courseManager.getDurationLabel(c.name);
-      const comp         = c.completion || 'Not Started';
-      const sn           = c.name.replace(/'/g, "\\'");
-      return '<div class="course-row-card">'
-
-        // Box 1 — Course name + assignment details
-        + '<div class="course-row-box course-row-info">'
-        + '<div class="course-row-name-wrap">'
-        + '<input type="color" value="'+c.color+'" class="course-color-dot-btn" onclick="event.stopPropagation()" onchange="app.updateCourseColor(''+sn+'',this.value)" title="Change colour" />'
-        + '<div class="course-row-name" contenteditable="true" onblur="app.renameCourse(''+sn+'',this.textContent.trim())">'+c.name+'</div>'
-        + '</div>'
-        + '<div class="course-row-count" onclick="app.filterByCourse(''+sn+'')">'+count+' assignment'+(count!==1?'s':'')+' &rarr;</div>'
-        + '</div>'
-
-        // Box 2 — Duration
-        + '<div class="course-row-box course-row-dur">'
-        + '<div class="course-row-label">&#9201; Duration (mins)</div>'
-        + '<input type="number" min="0" placeholder="e.g. 90" value="'+durTotalMins+'" class="course-dur-field" onchange="app.updateCourseDuration(''+sn+'',this.value)" />'
-        + (durLabel ? '<div class="course-dur-hint">'+durLabel+'</div>' : '')
-        + '</div>'
-
-        // Box 3 — Completion status dropdown
-        + '<div class="course-row-box course-row-status">'
-        + '<div class="course-row-label">&#9989; Status</div>'
-        + '<select class="course-status-select course-status-'+comp.replace(/ /g,'-').toLowerCase()+'" onchange="app.updateCourseCompletion(''+sn+'',this.value)">'
-        + ['Not Started','In Progress','Completed'].map(function(s){ return '<option value="'+s+'"'+(comp===s?' selected':'')+'>'+s+'</option>'; }).join('')
-        + '</select>'
-        + '</div>'
-
-        // Delete button
-        + '<button class="course-row-del btn-icon del-btn" onclick="app.deleteCourse(''+sn+'')" title="Delete">&#128465;&#65039;</button>'
-
-        + '</div>';
-    }).join('');
+    grid.innerHTML = all.map(c => this._buildCourseCard(c, counts[c.name] || 0)).join('');
   }
 
   addCourse() {
