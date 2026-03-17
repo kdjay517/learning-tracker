@@ -2027,3 +2027,75 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   .course-row-dur  { flex: 1; }
   .course-row-status { flex: 1; }
 }
+
+/* ===== COURSE ROW CARD — mobile improvements ===== */
+@media (max-width: 768px) {
+  .course-row-card {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+  /* Box 1 full width on mobile */
+  .course-row-info {
+    flex: 1 1 100%;
+    order: 1;
+  }
+  /* Duration and status side by side */
+  .course-row-dur {
+    flex: 1;
+    min-width: 130px;
+    order: 2;
+  }
+  .course-row-status {
+    flex: 1;
+    min-width: 130px;
+    order: 3;
+  }
+  /* Delete button on far right of second row */
+  .course-row-del {
+    order: 4;
+    align-self: flex-end;
+    margin-left: auto;
+  }
+  /* Larger touch targets */
+  .course-dur-field {
+    font-size: 16px; /* prevent iOS zoom */
+    padding: 10px;
+    min-height: 44px;
+  }
+  .course-status-select {
+    font-size: 14px;
+    padding: 10px;
+    min-height: 44px;
+  }
+  .course-color-dot-btn {
+    width: 28px;
+    height: 28px;
+  }
+  .course-row-name {
+    font-size: 15px;
+  }
+  .course-row-count {
+    font-size: 12px;
+  }
+  /* Add course form stacks on mobile */
+  .courses-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .add-course-wrap {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .add-course-wrap input[type="text"] {
+    flex: 1;
+    min-width: 120px;
+    font-size: 16px;
+  }
+  .add-course-wrap .btn-primary {
+    width: 100%;
+    margin-top: 4px;
+  }
+}
