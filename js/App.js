@@ -285,6 +285,15 @@ class App {
     return streak;
   }
 
+  _courseStatusBtns(safeName, current) {
+    const statuses = ['Not Started', 'In Progress', 'Completed'];
+    return statuses.map(function(s) {
+      const cls  = 'course-status-btn course-status-' + s.replace(/ /g, '-').toLowerCase() + (current === s ? ' course-status-active' : '');
+      const call = 'app.updateCourseCompletion(' + JSON.stringify(safeName.replace(/\\'/g, "'")) + ',' + JSON.stringify(s) + ')';
+      return '<button class="' + cls + '" onclick="' + call + '">' + s + '</button>';
+    }).join('');
+  }
+
   _renderCourses() {
     const el = document.getElementById('coursesContent');
     if (!el) return;
@@ -334,7 +343,7 @@ class App {
         + '<div class="course-field-row">'
         + '<span class="course-field-label">&#9989; Completion Status</span>'
         + '<div class="course-status-wrap">'
-        + ['Not Started','In Progress','Completed'].map(function(s){return '<button class="course-status-btn course-status-'+s.replace(' ','-').toLowerCase()+(comp===s?' course-status-active':'')+\'\' onclick="app.updateCourseCompletion(\'\'+sn+\'\',\'\'+s+\'\')">\'+ s +\'</button>\';}).join('')
+        + this._courseStatusBtns(sn, comp)
         + '</div>'
         + '</div>'
         + '</div>'
