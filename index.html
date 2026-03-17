@@ -136,8 +136,8 @@
             <tr>
               <th><input type="checkbox" id="aSelectAll" onchange="app.assignmentUI.toggleSelectAll(this)" /></th>
               <th>Course &#9998;</th><th>Assignment Title &#9998;</th>
-              <th>Assigned &#9998;</th><th>Due Date &#9998;</th>
-              <th>Duration (hrs) &#9998;</th><th>Days Left</th>
+              
+              
               <th>Status &#9998;</th><th>Priority &#9998;</th>
               <th>Progress</th><th>Actions</th>
             </tr>
@@ -214,7 +214,15 @@
         <div class="form-group"><label>Status</label><select name="aStatus"><option>Pending</option><option>In Progress</option><option>Completed</option></select></div>
         <div class="form-group"><label>Priority</label><select name="aPriority"><option>High</option><option>Medium</option><option>Low</option></select></div>
         <div class="form-group"><label>Progress (%)</label><input type="number" name="aProgress" min="0" max="100" placeholder="0" /></div>
-        <div class="form-group"><label>Duration (hrs)</label><input type="number" name="aDuration" min="0" step="0.5" placeholder="e.g. 5" /></div>
+        <div class="form-group">
+          <label>Duration</label>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <input type="number" name="aDurationH" min="0" max="999" placeholder="0" style="flex:1;" />
+            <span style="color:var(--text3);font-size:12px;">h</span>
+            <input type="number" name="aDurationM" min="0" max="59" placeholder="0" style="flex:1;" />
+            <span style="color:var(--text3);font-size:12px;">m</span>
+          </div>
+        </div>
         <div class="form-group"><label>Submission Type</label><select name="aSubmission"><option>Physical Submission</option><option>Google Form</option><option>Email Submission</option><option>Online Upload</option></select></div>
         <div class="form-group"><label>Completed Date</label><input type="date" name="aCompletedDate" /></div>
         <div class="form-group full"><label>Notes / Remarks</label><textarea name="aNotes" placeholder="Any notes, resources, or remarks…" rows="2" style="resize:vertical;"></textarea></div>
@@ -244,15 +252,15 @@
   window.dispatchEvent(new Event('firebase-ready'));
 </script>
 
-<script src="js/Assignment.js?v=23"></script>
-<script src="js/Habit.js?v=23"></script>
-<script src="js/Auth.js?v=23"></script>
-<script src="js/Store.js?v=23"></script>
-<script src="js/CourseManager.js?v=23"></script>
-<script src="js/AssignmentManager.js?v=23"></script>
-<script src="js/HabitManager.js?v=23"></script>
-<script src="js/AssignmentUI.js?v=23"></script>
-<script src="js/HabitUI.js?v=23"></script>
-<script src="js/App.js?v=23"></script>
+<script src="js/Assignment.js?v=24"></script>
+<script src="js/Habit.js?v=24"></script>
+<script src="js/Auth.js?v=24"></script>
+<script src="js/Store.js?v=24"></script>
+<script src="js/CourseManager.js?v=24"></script>
+<script src="js/AssignmentManager.js?v=24"></script>
+<script src="js/HabitManager.js?v=24"></script>
+<script src="js/AssignmentUI.js?v=24"></script>
+<script src="js/HabitUI.js?v=24"></script>
+<script src="js/App.js?v=24"></script>
 </body>
 </html>

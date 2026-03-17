@@ -1776,3 +1776,87 @@ canvas#hOverviewCanvas { width: 100%; display: block; }
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* ===== COURSE CARD EXPANDED FIELDS ===== */
+.course-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.course-card-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.course-field-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.course-field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text3);
+  font-weight: 600;
+}
+.course-dur-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.course-field-input {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  width: 64px;
+  text-align: center;
+  transition: border-color 0.15s;
+}
+.course-field-input:focus { border-color: var(--accent); }
+.course-dur-sep {
+  font-size: 12px;
+  color: var(--text3);
+  font-weight: 600;
+}
+.course-comp-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.course-comp-slider {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+  height: 4px;
+}
+.course-comp-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 36px;
+  text-align: right;
+}
+.course-comp-bar {
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+.course-comp-fill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+.course-mgmt-card { cursor: default; }
+.course-mgmt-card:hover { border-color: var(--accent); }

@@ -193,19 +193,20 @@ class AssignmentUI {
   _renderHoursSummary(items) {
     const el = document.getElementById('aHoursSummary');
     if (!el) return;
-    const withHours = items.filter(a => a.durationHours && parseFloat(a.durationHours) > 0);
-    if (!withHours.length) { el.innerHTML = ''; return; }
-    const total = withHours.reduce((sum, a) => sum + parseFloat(a.durationHours||0), 0);
-    const done  = withHours.filter(a => a.status === 'Completed').reduce((sum,a)=>sum+parseFloat(a.durationHours||0),0);
-    const remaining = total - done;
+    const withDur = items.filter(a => a.durationTotalMins > 0);
+    if (!withDur.length) { el.innerHTML = ''; return; }
+    const fmtMins = (m) => { const h=Math.floor(m/60),mn=m%60; if(h&&mn) return h+'h '+mn+'m'; if(h) return h+'h'; return mn+'m'; };
+    const total    = withDur.reduce((s,a)=>s+a.durationTotalMins, 0);
+    const done     = withDur.filter(a=>a.status==='Completed').reduce((s,a)=>s+a.durationTotalMins,0);
+    const remaining= total - done;
     const byCourse = {};
-    withHours.forEach(a => { if(a.courseName) { byCourse[a.courseName] = (byCourse[a.courseName]||0) + parseFloat(a.durationHours||0); } });
+    withDur.forEach(a=>{if(a.courseName)byCourse[a.courseName]=(byCourse[a.courseName]||0)+a.durationTotalMins;});
     const topCourse = Object.entries(byCourse).sort((a,b)=>b[1]-a[1])[0];
     el.innerHTML = '<div class="hours-card">'
-      + '<div class="hours-item"><span class="hours-label">Total hours</span><span class="hours-val">' + total.toFixed(1) + ' hrs</span></div>'
-      + '<div class="hours-item"><span class="hours-label">Completed</span><span class="hours-val" style="color:var(--lo)">' + done.toFixed(1) + ' hrs</span></div>'
-      + '<div class="hours-item"><span class="hours-label">Remaining</span><span class="hours-val" style="color:var(--accent4)">' + remaining.toFixed(1) + ' hrs</span></div>'
-      + (topCourse ? '<div class="hours-item"><span class="hours-label">Most hours</span><span class="hours-val" style="color:var(--accent)">' + topCourse[0] + ' (' + topCourse[1].toFixed(1) + ' hrs)</span></div>' : '')
+      + '<div class="hours-item"><span class="hours-label">Total time</span><span class="hours-val">'+fmtMins(total)+'</span></div>'
+      + '<div class="hours-item"><span class="hours-label">Completed</span><span class="hours-val" style="color:var(--lo)">'+fmtMins(done)+'</span></div>'
+      + '<div class="hours-item"><span class="hours-label">Remaining</span><span class="hours-val" style="color:var(--accent4)">'+fmtMins(remaining)+'</span></div>'
+      + (topCourse ? '<div class="hours-item"><span class="hours-label">Most time</span><span class="hours-val" style="color:var(--accent)">'+topCourse[0]+' ('+fmtMins(topCourse[1])+')</span></div>' : '')
       + '</div>';
   }
 
@@ -279,7 +280,7 @@ class AssignmentUI {
         : (!this._archiveMode
             ? '<div class="empty-state"><div class="empty-icon">&#127881;</div><div class="empty-title">All caught up!</div><div class="empty-sub">No active assignments. Click "Show All" to see completed ones.</div></div>'
             : '<div class="empty-state"><div class="empty-icon">&#128196;</div><div class="empty-title">No assignments yet</div><div class="empty-sub">Click "+ Add Assignment" to get started</div></div>');
-      tbody.innerHTML = '<tr><td colspan="11">' + msg + '</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7">' + msg + '</td></tr>';
       this._renderMobileCards(items);
       this._renderStats();
       return;
@@ -307,10 +308,10 @@ class AssignmentUI {
         +'<td><input type="checkbox" class="row-check"'+(isSelected?' checked':'')+' onchange="app.assignmentUI.toggleSelect('+a.id+', this)" /></td>'
         +'<td><div class="course-dot-wrap"><span class="course-color-dot" style="background:'+courseColor+'"></span>'+this._courseCell(a.id, a.courseName)+'</div></td>'
         +'<td><input class="inline-input title-input" type="text" value="'+a.title.replace(/"/g,'&quot;')+'" placeholder="Title..." onblur="app.assignmentUI.saveField('+a.id+',\'title\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
-        +'<td><input class="inline-input inline-date" type="date" value="'+(a.assignedDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'assignedDate\',this.value)" /></td>'
-        +'<td><input class="inline-input inline-date" type="date" value="'+(a.dueDate||'')+'" onchange="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" oninput="app.assignmentUI.saveField('+a.id+',\'dueDate\',this.value)" /></td>'
-        +'<td><input class="inline-input dur-input" type="number" min="0" step="0.5" value="'+(a.durationHours||'')+'" placeholder="hrs" onblur="app.assignmentUI.saveField('+a.id+',\'durationHours\',this.value)" onkeydown="if(event.key===\'Enter\')this.blur()" /></td>'
-        +'<td><span class="days-badge '+daysClass+'">'+daysLabel+'</span></td>'
+
+
+
+
         +'<td><select class="inline-select status-select '+statusCls+'" onchange="app.assignmentUI.saveField('+a.id+',\'status\',this.value);this.className=\'inline-select status-select status-\'+this.value.replace(\' \',\'-\').toLowerCase();">'
           +'<option'+(a.status==='Pending'?' selected':'')+'>Pending</option>'
           +'<option'+(a.status==='In Progress'?' selected':'')+'>In Progress</option>'
@@ -534,7 +535,8 @@ class AssignmentUI {
       form.aStatus.value        = assignment.status;
       form.aPriority.value      = assignment.priority;
       form.aProgress.value      = assignment.progress;
-      form.aDuration.value      = assignment.durationHours || '';
+      if (form.aDurationH) form.aDurationH.value = assignment.durationHours || '';
+      if (form.aDurationM) form.aDurationM.value = assignment.durationMins  || '';
       form.aSubmission.value    = assignment.submissionType;
       form.aCompletedDate.value = assignment.completedDate;
       form.aNotes.value         = assignment.notes || '';
@@ -562,7 +564,8 @@ class AssignmentUI {
       status:         form.aStatus.value,
       priority:       form.aPriority.value,
       progress:       parseInt(form.aProgress.value)||0,
-      durationHours:  form.aDuration.value,
+      durationHours:  form.aDurationH ? form.aDurationH.value : '',
+      durationMins:   form.aDurationM ? form.aDurationM.value : '',
       submissionType: form.aSubmission.value,
       completedDate:  form.aCompletedDate.value,
       notes:          form.aNotes.value.trim(),

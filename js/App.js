@@ -310,15 +310,38 @@ class App {
       return;
     }
     grid.innerHTML = all.map(c => {
-      const count = counts[c.name] || 0;
-      return '<div class="course-mgmt-card" onclick="app.filterByCourse(\''+c.name.replace(/'/g,"\\'")+'\')">'
-        + '<div class="course-mgmt-left">'
-        + '<input type="color" value="'+c.color+'" class="course-color-picker" onchange="app.updateCourseColor(\''+c.name.replace(/'/g,"\\'")+'\', this.value)" />'
-        + '<div class="course-mgmt-info">'
-        + '<div class="course-mgmt-name" contenteditable="true" onblur="app.renameCourse(\''+c.name.replace(/'/g,"\\'")+'\', this.textContent.trim())">'+c.name+'</div>'
-        + '<div class="course-mgmt-count course-mgmt-count-link" onclick="event.stopPropagation();app.filterByCourse(\''+c.name.replace(/'/g,"\\'")+'\')">'+count+' assignment'+(count!==1?'s':'')+' — view &#8594;</div>'
+      const count  = counts[c.name] || 0;
+      const durH   = c.durationHours || '';
+      const durM   = c.durationMins  || '';
+      const comp   = c.completion    || 0;
+      const sn     = c.name.replace(/'/g, "\\'");
+      return '<div class="course-mgmt-card">'
+        + '<div class="course-card-top">'
+        + '<input type="color" value="'+c.color+'" class="course-color-picker" onclick="event.stopPropagation()" onchange="app.updateCourseColor(\''+sn+'\',this.value)" />'
+        + '<div class="course-mgmt-info" style="flex:1">'
+        + '<div class="course-mgmt-name" contenteditable="true" onblur="app.renameCourse(\''+sn+'\',this.textContent.trim())">'+c.name+'</div>'
+        + '<div class="course-mgmt-count course-mgmt-count-link" onclick="app.filterByCourse(\''+sn+'\')">'+count+' assignment'+(count!==1?'s':'')+' — view &#8594;</div>'
+        + '</div>'
+        + '<button class="btn-icon del-btn" onclick="app.deleteCourse(\''+sn+'\')">&#128465;&#65039;</button>'
+        + '</div>'
+        + '<div class="course-card-fields">'
+        + '<div class="course-field-row">'
+        + '<span class="course-field-label">&#9201; Duration</span>'
+        + '<div class="course-dur-inputs">'
+        + '<input type="number" min="0" max="999" placeholder="0" value="'+durH+'" class="course-field-input" onchange="app.updateCourseDuration(\''+sn+'\',this.value,this.closest(\'.course-dur-inputs\').querySelector(\'[data-m]\').value)" />'
+        + '<span class="course-dur-sep">h</span>'
+        + '<input type="number" min="0" max="59" placeholder="0" value="'+durM+'" class="course-field-input" data-m onchange="app.updateCourseDuration(\''+sn+'\',this.closest(\'.course-dur-inputs\').querySelector(\'input:first-child\').value,this.value)" />'
+        + '<span class="course-dur-sep">m</span>'
         + '</div></div>'
-        + '<button class="btn-icon del-btn" onclick="app.deleteCourse(\''+c.name.replace(/'/g,"\\'")+'\')">&#128465;&#65039;</button>'
+        + '<div class="course-field-row">'
+        + '<span class="course-field-label">&#9989; Completion</span>'
+        + '<div class="course-comp-wrap">'
+        + '<input type="range" min="0" max="100" step="5" value="'+comp+'" class="course-comp-slider" oninput="this.nextElementSibling.textContent=this.value+\'%\';app.updateCourseCompletion(\''+sn+'\',this.value)" />'
+        + '<span class="course-comp-val">'+comp+'%</span>'
+        + '</div>'
+        + '<div class="course-comp-bar"><div class="course-comp-fill" style="width:'+comp+'%;background:'+c.color+'"></div></div>'
+        + '</div>'
+        + '</div>'
         + '</div>';
     }).join('');
   }
@@ -334,6 +357,14 @@ class App {
 
   updateCourseColor(name, color) {
     this.courseManager.updateColor(name, color);
+  }
+
+  updateCourseDuration(name, hours, mins) {
+    this.courseManager.updateDuration(name, hours, mins);
+  }
+
+  updateCourseCompletion(name, pct) {
+    this.courseManager.updateCompletion(name, pct);
   }
 
   renameCourse(oldName, newName) {

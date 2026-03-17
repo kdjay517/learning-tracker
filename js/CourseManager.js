@@ -5,8 +5,7 @@ class CourseManager {
   ];
 
   constructor(courses) {
-    this.courses = courses || [];
-    // Track names the user explicitly deleted so sync doesn't re-add them
+    this.courses  = courses || [];
     this._deleted = new Set();
   }
 
@@ -17,11 +16,15 @@ class CourseManager {
     return CourseManager.PALETTE[idx];
   }
 
+  getCourse(name) {
+    return this.courses.find(c => c.name === name) || null;
+  }
+
   add(name, color) {
     if (!name || this.courses.find(c => c.name === name)) return;
     const col = color || CourseManager.PALETTE[this.courses.length % CourseManager.PALETTE.length];
-    this.courses.push({ name: name.trim(), color: col });
-    this._deleted.delete(name.trim()); // un-mark as deleted if re-added
+    this.courses.push({ name: name.trim(), color: col, durationHours: '', durationMins: '', completion: 0 });
+    this._deleted.delete(name.trim());
     this._persist();
   }
 
@@ -31,6 +34,16 @@ class CourseManager {
     else   { this.add(name, color); }
   }
 
+  updateDuration(name, hours, mins) {
+    const c = this.courses.find(c => c.name === name);
+    if (c) { c.durationHours = hours; c.durationMins = mins; this._persist(); }
+  }
+
+  updateCompletion(name, pct) {
+    const c = this.courses.find(c => c.name === name);
+    if (c) { c.completion = Math.min(100, Math.max(0, parseInt(pct)||0)); this._persist(); }
+  }
+
   rename(oldName, newName) {
     const c = this.courses.find(c => c.name === oldName);
     if (c) { c.name = newName.trim(); this._persist(); }
@@ -38,12 +51,11 @@ class CourseManager {
 
   delete(name) {
     this.courses = this.courses.filter(c => c.name !== name);
-    this._deleted.add(name); // remember this was intentionally deleted
+    this._deleted.add(name);
     this._persist();
   }
 
   syncFromAssignments(assignments) {
-    // Only add courses that haven't been intentionally deleted
     assignments.forEach(a => {
       if (a.courseName && !this._deleted.has(a.courseName) && !this.courses.find(c => c.name === a.courseName)) {
         this.add(a.courseName);
